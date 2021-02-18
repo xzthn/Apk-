@@ -1,0 +1,1 @@
+[{"outputType":{"type":"INSTANT_RUN_MERGED_MANIFESTS"},"apkInfo":{"type":"MAIN","splits":[],"versionCode":42,"versionName":"1.842","enabled":true,"outputFile":"apkcheck-V1.842-C42-HISIOV-20210203.apk","fullName":"HISIOVRelease","baseName":"HISIOV-release"},"path":"AndroidManifest.xml","properties":{"packageId":"hs.apk.update","split":"","minSdkVersion":"19"}}]

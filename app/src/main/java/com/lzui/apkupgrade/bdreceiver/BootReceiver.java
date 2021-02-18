@@ -1,0 +1,51 @@
+package com.lzui.apkupgrade.bdreceiver;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+import com.lunzn.tool.log.LogUtil;
+import com.lzui.apkupgrade.biz.NetCheckBiz;
+import com.lzui.apkupgrade.data.ExternalActions;
+import com.realsil.ota.DfuController;
+
+/**
+ * 用于接收消息的广播接收器
+ *
+ * @author Administrator
+ */
+public class BootReceiver extends BroadcastReceiver {
+
+    private static final String TAG = "BootUpgradeBiz";
+
+    @Override
+    public void onReceive(Context mContext, Intent intent) {
+        String action = intent.getAction();
+        LogUtil.i(TAG, "onReceive action:  " + action);
+        if (ExternalActions.ACTION_LAUNCHER_ADV_COMPLETED.equals(action)) {
+            Intent serviceIntent = new Intent("service.handle.push.event");
+            serviceIntent.putExtra("event", ExternalActions.EVENT_LAUNCHER_ADV_COMPLETED);
+            serviceIntent.setPackage(mContext.getPackageName());
+            mContext.startService(serviceIntent);
+        } else {
+            //网络连接后重新请求
+            boolean isConnected = NetCheckBiz.isNetworkConnected(mContext);
+            if (isConnected) {
+                Intent serviceIntent = new Intent("service.handle.push.event");
+                serviceIntent.putExtra("event", ExternalActions.EVENT_APP_UPGRADE_CHECK);
+                serviceIntent.setPackage(mContext.getPackageName());
+                mContext.startService(serviceIntent);
+            }
+        }
+
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
+            LogUtil.i(TAG, "收到开机广播，请求固件升级");
+            DfuController.getInstance().checkUpgradeForce();
+        } else if ("android.net.conn.CONNECTIVITY_CHANGE".equals(action)
+                || "android.net.pppoe.PPPOE_STATE_CHANGED".equals(action)) {
+            LogUtil.i(TAG, "收到网络连接广播，查询是否升固件级");
+            DfuController.getInstance().checkUpgrade();
+        }
+    }
+
+}

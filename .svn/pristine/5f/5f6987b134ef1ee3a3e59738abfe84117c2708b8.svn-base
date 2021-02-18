@@ -1,0 +1,48 @@
+package com.lzui.apkupgrade.net;
+
+/**
+ * 全局环境变量
+ *
+ * @author admin
+ * @version 1.0
+ * @date 2017-12-11
+ * @project com.lzui.apkupgrade
+ * @package com.lzui.apkupgrade.net
+ * @package MVDeviceConfig.java
+ */
+public class MVDeviceConfig {
+
+    /**
+     * 服务器优先请求地址
+     */
+    public static String[] urlList1 = new String[]{"http://lunzn.aisee.tv/m2/"/*"http://192.168.1.10:10280/m2/"*/};
+
+    /**
+     * 服务器域名  (增加host映射)
+     */
+    private static String realmName = "lunzn.aisee.tv";
+
+    /**
+     * 是否升级完需要重启
+     */
+    public static boolean needReboot;
+
+    /**
+     * 获取URL地址
+     *
+     * @return String[] URL地址
+     */
+    public static String[] getUrls(boolean isBack) {
+        return urlList1;
+    }
+
+    /**
+     * 获取域名
+     *
+     * @return
+     */
+    public static String getRealmName() {
+        return realmName;
+    }
+
+}

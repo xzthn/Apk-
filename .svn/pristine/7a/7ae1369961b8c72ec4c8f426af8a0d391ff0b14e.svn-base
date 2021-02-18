@@ -1,0 +1,97 @@
+package com.lzui.apkupgrade.net;
+
+import android.content.Context;
+
+import com.lunzn.tool.log.LogUtil;
+import com.lunzn.tool.util.DeviceInfoMgr;
+import com.platform.http.AndroidHttpConnction;
+import com.platform.sdk.m2.request.RequestInit;
+import com.platform.sdk.m2.request.RequestRoot;
+import com.platform.sdk.m2.response.ResponseRoot;
+import com.smart.app.AppInfoTools;
+
+/**
+ * Desc: TODO
+ * <p>
+ * Author: panwensheng
+ * PackageName: com.lzui.apkupgrade.net
+ * ProjectName: APKCheck
+ * Date: 2020/6/17 15:17
+ */
+public class BlackListHttpRequest {
+
+    /**
+     * 发送post请求
+     *
+     * @param mContext 上下文
+     * @param mRequest 请求参数对象
+     * @return 请求结果
+     */
+    public static ResponseRoot sendHttpPostRequest(Context mContext, RequestRoot mRequest) {
+
+        ResponseRoot mResponse = null;
+        try {
+            mResponse = sendHttpRequest(mContext, mRequest);
+        } catch (Exception je) {
+            LogUtil.e("sendHttpPostRequest exception" + je);
+            je.printStackTrace();
+        }
+        return mResponse;
+    }
+
+    /**
+     * 将具体的请求发送至服务器
+     *
+     * @param mContext 上下文
+     * @param mRequest 具体请求对象
+     * @return 返回结果
+     */
+    private static ResponseRoot sendHttpRequest(Context mContext, RequestRoot mRequest) {
+        LogUtil.i("sendHttpRequest", "");
+
+        ResponseRoot res = null;
+        initRequestPublicParams(mContext);
+        String[] urlList = MVDeviceConfig.getUrls(false);
+        String url = urlList[0];//当前只有一个地址
+        res = getResponseFromNet(mRequest, url);
+        return res;
+    }
+
+    /**
+     * 初始化公共请求参数
+     *
+     * @param mContext 上下文
+     */
+    private static void initRequestPublicParams(Context mContext) {
+        RequestInit.setLauncherSign(AppInfoTools.getAppChannel(mContext, "com.lzui.launcher", "COVERSION"));
+        RequestInit.setLauncherVsn(AppInfoTools.getApkVersion(mContext, mContext.getPackageName()));
+        RequestInit.setHttpConn(new AndroidHttpConnction());
+
+        DeviceInfoMgr.DeviceInfo deviceInfo = DeviceInfoMgr.getInstance().getDeviceInfo(mContext);
+        if (deviceInfo != null) {
+            RequestInit.setRomSign(deviceInfo.getSoftwareVersion());
+            RequestInit.setGdid(deviceInfo.getGdid());
+            RequestInit.setSn(deviceInfo.getSn());
+            RequestInit.setMac(deviceInfo.getMac());
+        }
+        //设置域名
+        RequestInit.setRealmName(MVDeviceConfig.getRealmName());
+    }
+
+
+    /**
+     * 从服务器获取请求结果
+     *
+     * @param mRequest 接口请求对象
+     * @param url      请求地址
+     * @return 请求结果
+     */
+    private static ResponseRoot getResponseFromNet(RequestRoot mRequest, String url) {
+        LogUtil.i("getResponseFromNet", "url " + url);
+        ResponseRoot res = null;
+        RequestInit.setServerIp(url);
+        res = mRequest.getResponse();
+        return res;
+    }
+
+}

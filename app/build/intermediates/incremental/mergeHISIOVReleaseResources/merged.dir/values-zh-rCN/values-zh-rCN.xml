@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="dfu_app_file_browser">
+        <item>ES File Manager</item>
+        <item>File Manager</item>
+        <item>RE File Manager</item>
+        <item>Search for others</item>
+    </string-array>
+    <string-array name="dfu_app_file_browser_action">
+        <item>market://details?id=com.estrongs.android.pop</item>
+        <item>market://details?id=com.rhmsoft.fm</item>
+        <item>market://details?id=com.speedsoftware.rootexplorer</item>
+        <item>market://search?q=file manager</item>
+    </string-array>
+    <array name="error_code">
+        <item>@array/error_code_256</item>
+        <item>@array/error_code_257</item>
+        <item>@array/error_code_258</item>
+        <item>@array/error_code_259</item>
+        <item>@array/error_code_260</item>
+        <item>@array/error_code_261</item>
+        <item>@array/error_code_262</item>
+        <item>@array/error_code_263</item>
+        <item>@array/error_code_264</item>
+        <item>@array/error_code_265</item>
+        <item>@array/error_code_266</item>
+        <item>@array/error_code_267</item>
+        <item>@array/error_code_268</item>
+        <item>@array/error_code_269</item>
+        <item>@array/error_code_270</item>
+        <item>@array/error_code_271</item>
+        <item>@array/error_code_272</item>
+        <item>@array/error_code_273</item>
+        <item>@array/error_code_274</item>
+        <item>@array/error_code_767</item>
+        <item>@array/error_code_2305</item>
+
+
+    </array>
+    <array name="error_code_2305">
+        <item>"2305"</item>
+        <item>无法注册Client_if</item>
+        <item>1. Client if被注册完了</item>
+    </array>
+    <array name="error_code_256">
+        <item>"256"</item>
+        <item>无法连接进入OTA模式的设备</item>
+        <item>1. 广播环境极其差
+            \n2. Android设备与Ble设备连接走了BR/EDR通道
+            \n3. Android设备Bluedroid异常
+        </item>
+    </array>
+    <array name="error_code_257">
+        <item>"257"</item>
+        <item>文件读取IO错误</item>
+        <item>1. I/O问题，概率极低</item>
+    </array>
+    <array name="error_code_258">
+        <item>"258"</item>
+        <item>启动搜索服务失败</item>
+        <item>1. Bluedroid异常，概率极低</item>
+    </array>
+    <array name="error_code_259">
+        <item>"259"</item>
+        <item>调用Java同步锁异常</item>
+        <item>1. Java问题，概率极低</item>
+    </array>
+    <array name="error_code_260">
+        <item>"260"</item>
+        <item>连接无回调</item>
+        <item>1. 可能其他应用在对同一设备做连接动作
+            \n2. Bluedroid异常，概率极低
+        </item>
+    </array>
+    <array name="error_code_261">
+        <item>"261"</item>
+        <item>发送command无回调</item>
+        <item>1. 发送command过程中断线
+            \n2. 如果是Android4.4系统，升级到一半中出现该错误，有可能是底下gki get
+            buffer出异常了，请对方使用patch版本在9377以上的版本（该版本添加了更新连接参数的功能）或者使用Android5.0以上版本的手机。
+        </item>
+    </array>
+    <array name="error_code_262">
+        <item>"262"</item>
+        <item>服务不匹配</item>
+        <item>1. 连到了异常设备，概率极低</item>
+    </array>
+    <array name="error_code_263">
+        <item>"263"</item>
+        <item>特性不匹配</item>
+        <item>1. 连到了异常设备，概率极低</item>
+    </array>
+    <array name="error_code_264">
+        <item>"264"</item>
+        <item>GATT对象为空</item>
+        <item>1. Bluedroid异常，概率极低</item>
+    </array>
+    <array name="error_code_265">
+        <item>"265"</item>
+        <item>无法scan到设备</item>
+        <item>1. 广播环境极其差
+            \n2. 发送了让对端进入OTA模式的命令后，没扫描到对端设备，可能的原因是对端设备并未进入OTA模式
+        </item>
+    </array>
+    <array name="error_code_266">
+        <item>"266"</item>
+        <item>无法使能notification</item>
+        <item>1. Bluedroid异常，概率极低</item>
+    </array>
+    <array name="error_code_267">
+        <item>"267"</item>
+        <item>写特性失败</item>
+        <item>1. 发送write request对端返回response error</item>
+    </array>
+    <array name="error_code_268">
+        <item>"268"</item>
+        <item>重发次数达上限</item>
+        <item>1. Bluedroid异常，概率极低</item>
+    </array>
+    <array name="error_code_269">
+        <item>"269"</item>
+        <item>对端电池电量低</item>
+        <item>1. 对端电量小于60%
+            \n2. 对端电量大于110且小于140（For 华为）
+        </item>
+    </array>
+    <array name="error_code_270">
+        <item>"270"</item>
+        <item>读取bank区信息失败</item>
+        <item>1. Bluedroid异常，概率极低</item>
+    </array>
+    <array name="error_code_271">
+        <item>"271"</item>
+        <item>读取App信息失败</item>
+        <item>1. Bluedroid异常，概率极低</item>
+    </array>
+    <array name="error_code_272">
+        <item>"272"</item>
+        <item>读取Patch信息失败</item>
+        <item>1. Bluedroid异常，概率极低</item>
+    </array>
+    <array name="error_code_273">
+        <item>"273"</item>
+        <item>用户不激活文件更新</item>
+        <item>1. 在静默升级中用户不激活更新触发</item>
+    </array>
+    <array name="error_code_274">
+        <item>"274"</item>
+        <item>Buffer校验重传次数达到最大值</item>
+        <item>1. 出现大量的517错误</item>
+    </array>
+    <array name="error_code_767">
+        <item>"767"</item>
+        <item>未收到对端notification</item>
+        <item>1. 秘钥不匹配
+            \n2. 可能是对端设备Config内存分配有问题
+        </item>
+    </array>
+    <dimen name="dfu_feature_title_long_margin">-186dp</dimen>
+    <string name="about_title">关于</string>
+    <string name="about_version">\n\n版本：%s</string>
+    <string name="action_about">关于</string>
+    <string name="action_settings">设置</string>
+    <string name="connect_device">正在与设备：%s建立连接，请稍等片刻...</string>
+    <string name="connect_hid_profile">正在连接一个HID设备，先与对方建立HID profile，请稍等片刻...</string>
+    <string name="connect_hid_profile_failed">连接HID profile失败</string>
+    <string name="content_description_splashscreen">Splash screen image</string>
+    <string name="dfu_about_text">OTA是Realsil公司提供给Bee设备进行OTA（over-the-air）升级的演示软件
+        \n第一步：选择要升级的设备
+        \n第二步：选择要升级的固件文件（建议使用第三方文件浏览器）
+        \n第三步：开始升级
+        \n
+        \nOTA版本：2.4.3
+        \n2017.05.25
+        \nCopyright © 2016 Realsil Corporation. All rights reserved.
+    </string>
+    <string name="dfu_action_select_device">选择设备</string>
+    <string name="dfu_action_select_file">选择文件</string>
+    <string name="dfu_action_upload">开始升级</string>
+    <string name="dfu_action_upload_cancel">取消</string>
+    <string name="dfu_action_upload_help">\?</string>
+    <string name="dfu_alert_detail_file_info_sub_file_size">大小：</string>
+    <string name="dfu_alert_detail_file_info_sub_file_type">类型：</string>
+    <string name="dfu_alert_detail_file_info_sub_file_version">版本：</string>
+    <string name="dfu_alert_detail_file_info_title">文件详细信息</string>
+    <string name="dfu_alert_no_download_view_find_please_download_one">下载应用未找到，请自行下载一个文件浏览器</string>
+    <string name="dfu_alert_no_filebrowser_message">未找到文件浏览器，请自行下载一个文件浏览器</string>
+    <string name="dfu_alert_no_filebrowser_title">未找到文件浏览器</string>
+    <string name="dfu_bin_files_created">Bin文件已拷贝到：/sdcard/Realsil</string>
+    <string name="dfu_bin_new_files_created">新的Bin文件已拷贝到：/sdcard/Realsil</string>
+    <string name="dfu_confirmation_dialog_exit_message">确认退出应用？</string>
+    <string name="dfu_confirmation_dialog_title">固件升级中</string>
+    <string name="dfu_confirmation_dialog_toast_title">提示信息</string>
+    <string name="dfu_default_name">OTA</string>
+    <string name="dfu_default_toast">选择一个设备进行OTA升级</string>
+    <string name="dfu_feature_title">DFU</string>
+    <string name="dfu_feature_title_long">设备固件升级</string>
+    <string name="dfu_file_name_label">文件名称：</string>
+    <string name="dfu_file_new_fw_version_label">文件版本：</string>
+    <string name="dfu_file_old_fw_version_label">对端APP版本：</string>
+    <string name="dfu_file_old_patch_version_label">对端Patch版本：</string>
+    <string name="dfu_file_size_label">文件大小：</string>
+    <string name="dfu_file_size_text">%d bytes</string>
+    <string name="dfu_file_status_invalid">无效文件</string>
+    <string name="dfu_file_status_invalid_message">请选择有效的Bin文件</string>
+    <string name="dfu_file_status_label">状态：</string>
+    <string name="dfu_file_status_no_file">文件未加载</string>
+    <string name="dfu_file_status_ok">OK</string>
+    <string name="dfu_file_target_bank_label">当前要升级的Bank区：</string>
+    <string name="dfu_file_target_patch_extend_version_label">对端Extend Patch版本：</string>
+    <string name="dfu_file_type_label">文件类型：</string>
+    <string name="dfu_file_version_text_detail">文件详情</string>
+    <string name="dfu_help_message">在进行固件升级之前必须安装一个文件浏览器
+        \n\n在应用市场中有很多类似的应用，如ES文件浏览器等，你可以自行选择一个下载在手机/平板/TV中
+        \n\n当你选择文件时，会要求你选择一个可用的文件浏览器来选择文件
+       </string>
+    <string name="dfu_help_title">选择文件</string>
+    <string name="dfu_section_application_header">文件/版本信息</string>
+    <string name="dfu_section_dfu_header">设备固件升级</string>
+    <string name="dfu_service_unsupport">Dfu模式不支持</string>
+    <string name="dfu_settings_dfu">DFU选项设置</string>
+    <string name="dfu_settings_dfu_about">结束DFU</string>
+    <string name="dfu_settings_title">DFU设置</string>
+    <string name="dfu_silent_active_image_message">固件已经下载到对端设备并校验正确，是否激活？</string>
+    <string name="dfu_silent_low_version_speed_control_must_be_1k">由于GKI getBuf问题，低于5.0的版本，速率限定为1KB/s</string>
+    <string name="dfu_silent_or_normal_update_select_title">选择升级模式</string>
+    <string name="dfu_silent_select_update_mode_title">选择静默升级中的升级模式</string>
+    <string name="dfu_silent_select_update_speed_title">选择静默升级中的最大传输速率</string>
+    <string name="dfu_status_abored">已终止</string>
+    <string name="dfu_status_aborted_msg">固件升级已被取消</string>
+    <string name="dfu_status_completed">已完成</string>
+    <string name="dfu_status_completed_msg">固件升级成功</string>
+    <string name="dfu_status_connecting">正在连接…</string>
+    <string name="dfu_status_connecting_msg">正在与%s建立连接…</string>
+    <string name="dfu_status_disconnecting">正在断开连接…</string>
+    <string name="dfu_status_disconnecting_msg">正在与%s断开连接…</string>
+    <string name="dfu_status_error">升级失败</string>
+    <string name="dfu_status_error_msg">DFU流程执行失败</string>
+    <string name="dfu_status_initializing">正在初始化…</string>
+    <string name="dfu_status_scanning">正在扫描…</string>
+    <string name="dfu_status_starting">启动DFU模式…</string>
+    <string name="dfu_status_starting_msg">初始化DFU流程…</string>
+    <string name="dfu_status_uploading">正在升级…</string>
+    <string name="dfu_status_uploading_msg">发送文件给%s…</string>
+    <string name="dfu_status_validating">校验升级文件…</string>
+    <string name="dfu_status_validating_msg">校验文件…</string>
+    <string name="dfu_upload_dialog_cancel_message">确认取消升级？</string>
+    <string name="dfu_uploading_label">正在升级…</string>
+    <string name="dfu_uploading_percentage">%d%%</string>
+    <string name="dfu_uploading_percentage_label">0%</string>
+    <string name="failed_toast_info">错误码：%1$s\n概述：%2$s\n详情：%3$s</string>
+    <string name="font_path">fonts/trebucbd.ttf</string>
+    <string name="no">否</string>
+    <string name="no_ble">设备不支持BLE</string>
+    <string name="normal_font_path">fonts/trebuc.ttf</string>
+    <string name="progress">%d%%</string>
+    <string name="progress_bar_timeout">等待操作超时，可能出现延时，断开连接</string>
+    <string name="scanner_action_cancel">取消</string>
+    <string name="scanner_action_scan">搜索</string>
+    <string name="scanner_empty">未搜索到设备</string>
+    <string name="scanner_subtitle_bonded">已配对设备：</string>
+    <string name="scanner_subtitle_not_bonded">可用设备：</string>
+    <string name="scanner_title">选择一个你想要升级的设备：</string>
+    <string name="sure">确定</string>
+    <string name="title_activity_splash_screen">SplashScreenActivity</string>
+    <string name="toast_">Dfu服务已断开连接</string>
+    <string name="toast_bt_enabled">蓝牙已打开</string>
+    <string name="toast_bt_not_enabled">蓝牙未打开</string>
+    <string name="toast_dfu_gatt_connect">DFU Gatt已连接</string>
+    <string name="toast_dfu_service_connect">Dfu服务已连接</string>
+    <string name="toast_dfu_service_disconnect">Dfu服务已断开连接</string>
+    <string name="toast_dfu_service_not_ready">Dfu服务未准备好</string>
+    <string name="toast_gatt_connect">Gatt已连接</string>
+    <string name="toast_ota_failed">很遗憾，升级失败，失败代码：%s</string>
+    <string name="toast_ota_initial_connect_failed">初始化连接对端设备异常，失败代码：%s</string>
+    <string name="toast_ota_success">恭喜，升级成功，成功代码：%s</string>
+    <string name="toast_prepare_ota_process_failed">OTA准备工作异常</string>
+    <string name="toast_some_error_in_load_file">加载文件异常</string>
+    <string name="toast_some_error_in_set_ota_mode">设置OTA工作模式异常</string>
+    <string name="toast_start_ota_process">开始进行OTA升级</string>
+    <string name="yes">是</string>
+</resources>

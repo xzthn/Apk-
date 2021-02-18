@@ -1,0 +1,247 @@
+-- Merging decision tree log ---
+manifest
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+MERGED from [com.lunzn:systool:1.0.2] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\systool-1.0.2.aar\6920362e1672333311517aa55733f9eb\AndroidManifest.xml:2:1-11:12
+MERGED from [com.lunzn:tool:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\tool-1.3.1.aar\4f003d12f832dc8481e21804664e33a0\AndroidManifest.xml:2:1-12:12
+MERGED from [com.lunzn:file:1.0.5] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\file-1.0.5.aar\da7ecc18b7c3320b2e48fb99eaded6c7\AndroidManifest.xml:2:1-11:12
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:17:1-53:12
+MERGED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:2:1-19:12
+MERGED from [io.reactivex.rxjava2:rxandroid:2.1.0] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\rxandroid-2.1.0.aar\974fd0015945ca0b38a3f530d4227f57\AndroidManifest.xml:15:1-20:12
+MERGED from [com.major:http:1.0.4] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\http-1.0.4.aar\e9ecf02ba14b27241a5c697ac8516702\AndroidManifest.xml:2:1-11:12
+MERGED from [io.reactivex:rxandroid:1.2.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\rxandroid-1.2.1.aar\5792969d9e588f5e483c64d64f0cee93\AndroidManifest.xml:15:1-21:12
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+	package
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:2:5-32
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+	android:sharedUserId
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:3:5-46
+	android:versionName
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:1-63:12
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:1:11-69
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:6:5-79
+MERGED from [com.lunzn:tool:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\tool-1.3.1.aar\4f003d12f832dc8481e21804664e33a0\AndroidManifest.xml:9:5-79
+MERGED from [com.lunzn:tool:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\tool-1.3.1.aar\4f003d12f832dc8481e21804664e33a0\AndroidManifest.xml:9:5-79
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:26:5-79
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:26:5-79
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:6:22-76
+uses-permission#android.permission.INTERNET
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:7:5-67
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:27:5-67
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:27:5-67
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:7:22-64
+uses-permission#android.permission.READ_PHONE_STATE
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:8:5-75
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:8:22-72
+uses-permission#com.android.launcher.permission.INSTALL_SHORTCUT
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:9:5-88
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:9:22-85
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:11:5-81
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:30:5-81
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:30:5-81
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:11:22-78
+uses-permission#android.permission.MOUNT_UNMOUNT_FILESYSTEMS
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:12:5-84
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:12:22-81
+uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:13:5-81
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:13:22-78
+uses-permission#android.permission.SYSTEM_ALERT_WINDOW
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:14:5-78
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:14:22-75
+uses-permission#android.permission.WRITE_SETTINGS
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:15:5-73
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:15:22-70
+uses-permission#android.permission.CHANGE_CONFIGURATION
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:16:5-79
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:16:22-76
+uses-permission#android.permission.DELETE_PACKAGES
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:17:5-74
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:17:22-71
+uses-permission#android.permission.INSTALL_PACKAGES
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:18:5-75
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:18:22-72
+uses-permission#android.permission.READ_SETTINGS
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:19:5-72
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:19:22-69
+uses-permission#android.permission.KILL_BACKGROUND_PROCESSES
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:20:5-84
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:20:22-81
+uses-permission#android.permission.CLEAR_APP_USER_DATA
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:21:5-78
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:21:22-75
+uses-permission#android.permission.GET_TASKS
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:22:5-68
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:22:22-65
+uses-permission#android.permission.FORCE_STOP_PACKAGES
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:23:5-78
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:23:22-75
+uses-permission#android.permission.READ_FRAME_BUFFER
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:24:5-76
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:24:22-73
+protected-broadcast
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:26:5-65
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:26:26-62
+application
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:30:5-61:19
+MERGED from [com.lunzn:file:1.0.5] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\file-1.0.5.aar\da7ecc18b7c3320b2e48fb99eaded6c7\AndroidManifest.xml:9:5-47
+MERGED from [com.lunzn:file:1.0.5] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\file-1.0.5.aar\da7ecc18b7c3320b2e48fb99eaded6c7\AndroidManifest.xml:9:5-47
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:36:5-51:19
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:36:5-51:19
+MERGED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:11:5-17:19
+MERGED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:11:5-17:19
+	android:label
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:34:9-41
+	android:icon
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:33:9-45
+	android:allowBackup
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:32:9-35
+	android:theme
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:35:9-40
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:31:9-58
+activity#com.lzui.apkupgrade.activity.MainActivity
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:37:9-44:20
+	android:theme
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:39:13-77
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:38:13-69
+intent-filter#action:name:android.intent.action.MAIN
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:40:13-43:29
+action#android.intent.action.MAIN
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:41:17-69
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:41:25-66
+service#com.lzui.apkupgrade.service.ExternalActionService
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:46:9-50:19
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:46:18-82
+intent-filter#action:name:service.handle.push.event
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:47:13-49:29
+action#service.handle.push.event
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:48:17-68
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:48:25-65
+receiver#com.lzui.apkupgrade.bdreceiver.BootReceiver
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:52:9-60:20
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:52:19-77
+intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.net.conn.CONNECTIVITY_CHANGE+action:name:android.net.pppoe.PPPOE_STATE_CHANGED+action:name:com.lunzn.apk.check.test+action:name:com.lzui.launcher.adv.completed
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:53:13-59:29
+	android:priority
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:53:28-57
+action#android.intent.action.BOOT_COMPLETED
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:54:17-79
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:54:25-76
+action#android.net.conn.CONNECTIVITY_CHANGE
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:55:17-79
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:55:25-76
+action#android.net.pppoe.PPPOE_STATE_CHANGED
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:56:17-80
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:56:25-77
+action#com.lunzn.apk.check.test
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:57:17-67
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:57:25-64
+action#com.lzui.launcher.adv.completed
+ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:58:17-74
+	android:name
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml:58:25-71
+uses-sdk
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+MERGED from [com.lunzn:systool:1.0.2] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\systool-1.0.2.aar\6920362e1672333311517aa55733f9eb\AndroidManifest.xml:7:5-9:41
+MERGED from [com.lunzn:systool:1.0.2] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\systool-1.0.2.aar\6920362e1672333311517aa55733f9eb\AndroidManifest.xml:7:5-9:41
+MERGED from [com.lunzn:tool:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\tool-1.3.1.aar\4f003d12f832dc8481e21804664e33a0\AndroidManifest.xml:5:5-7:41
+MERGED from [com.lunzn:tool:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\tool-1.3.1.aar\4f003d12f832dc8481e21804664e33a0\AndroidManifest.xml:5:5-7:41
+MERGED from [com.lunzn:file:1.0.5] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\file-1.0.5.aar\da7ecc18b7c3320b2e48fb99eaded6c7\AndroidManifest.xml:5:5-7:41
+MERGED from [com.lunzn:file:1.0.5] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\file-1.0.5.aar\da7ecc18b7c3320b2e48fb99eaded6c7\AndroidManifest.xml:5:5-7:41
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:22:5-24:41
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:22:5-24:41
+MERGED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:7:5-9:41
+MERGED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:7:5-9:41
+MERGED from [io.reactivex.rxjava2:rxandroid:2.1.0] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\rxandroid-2.1.0.aar\974fd0015945ca0b38a3f530d4227f57\AndroidManifest.xml:18:5-43
+MERGED from [io.reactivex.rxjava2:rxandroid:2.1.0] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\rxandroid-2.1.0.aar\974fd0015945ca0b38a3f530d4227f57\AndroidManifest.xml:18:5-43
+MERGED from [com.major:http:1.0.4] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\http-1.0.4.aar\e9ecf02ba14b27241a5c697ac8516702\AndroidManifest.xml:7:5-9:41
+MERGED from [com.major:http:1.0.4] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\http-1.0.4.aar\e9ecf02ba14b27241a5c697ac8516702\AndroidManifest.xml:7:5-9:41
+MERGED from [io.reactivex:rxandroid:1.2.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\rxandroid-1.2.1.aar\5792969d9e588f5e483c64d64f0cee93\AndroidManifest.xml:19:5-43
+MERGED from [io.reactivex:rxandroid:1.2.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\rxandroid-1.2.1.aar\5792969d9e588f5e483c64d64f0cee93\AndroidManifest.xml:19:5-43
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+		ADDED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+		INJECTED from F:\asspace\APKCheck_trunk\app\src\main\AndroidManifest.xml
+uses-permission#android.permission.READ_EXTERNAL_STORAGE
+ADDED from [com.lunzn:tool:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\tool-1.3.1.aar\4f003d12f832dc8481e21804664e33a0\AndroidManifest.xml:10:5-80
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:31:5-80
+MERGED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:31:5-80
+	android:name
+		ADDED from [com.lunzn:tool:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-1\files-1.1\tool-1.3.1.aar\4f003d12f832dc8481e21804664e33a0\AndroidManifest.xml:10:22-77
+uses-permission#android.permission.BLUETOOTH
+ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:28:5-68
+	android:name
+		ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:28:22-65
+uses-permission#android.permission.BLUETOOTH_ADMIN
+ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:29:5-74
+	android:name
+		ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:29:22-71
+uses-permission#android.permission.ACCESS_COARSE_LOCATION
+ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:34:5-81
+	android:name
+		ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:34:22-78
+service#com.realsil.android.blehub.dfu.DfuService
+ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:40:9-50:19
+	android:exported
+		ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:42:13-37
+	android:name
+		ADDED from [:firmwire] F:\asspace\APKCheck_trunk\firmwire\build\intermediates\manifests\full\release\AndroidManifest.xml:41:13-69
+service#com.realsil.sdk.dfu.DfuService
+ADDED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:12:9-16:19
+	android:enabled
+		ADDED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:14:13-35
+	android:exported
+		ADDED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:15:13-37
+	android:name
+		ADDED from [:lib-otathird] F:\asspace\APKCheck_trunk\lib-otathird\build\intermediates\manifests\full\release\AndroidManifest.xml:13:13-58

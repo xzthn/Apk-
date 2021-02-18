@@ -1,0 +1,4 @@
+#Wed Feb 03 15:59:23 CST 2021
+base.0=F\:\\asspace\\APKCheck_trunk\\app\\build\\intermediates\\transforms\\dexMerger\\HISIOV\\release\\0
+path.0=classes.dex
+renamed.0=classes.dex

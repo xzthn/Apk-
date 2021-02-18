@@ -1,0 +1,518 @@
+package com.lzui.apkupgrade.biz;
+
+import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.Message;
+
+import com.lunzn.download.FinalFileLoad;
+import com.lunzn.download.command.DownloadUrlInfo;
+import com.lunzn.download.util.IDownloadInfoCallBack;
+import com.lunzn.systool.pkg.ApkManageBiz;
+import com.lunzn.tool.log.LogUtil;
+import com.lunzn.tool.toast.LzToast;
+import com.lunzn.tool.util.ApkUtil;
+import com.lunzn.tool.util.CommonUtil;
+import com.lzui.apkupgrade.activity.MainActivity;
+import com.lzui.apkupgrade.data.AppProperty;
+import com.lzui.apkupgrade.net.MVDeviceConfig;
+import com.lzui.apkupgrade.requesttask.AppBlackListRequestTask;
+import com.lzui.apkupgrade.requesttask.AppUpgradeRequestTask;
+import com.lzui.apkupgrade.util.FileSavePathUtil;
+import com.platform.sdk.m2.bean.launcher.LauncherAppUpgrade;
+import com.smart.util.Utils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+
+/**
+ * launcher启动业务类
+ *
+ * @author hongyi
+ * @version [版本号]
+ * @date 2017年7月26日
+ * @project COM.LZ.M02.LAUNCHER
+ * @package com.lz.m02.launcher.biz
+ * @package LauncherBootBiz.java
+ * @see [相关类/方法]
+ * @since [产品/模块版本]
+ */
+@SuppressLint("HandlerLeak")
+public class BootUpgradeBiz {
+
+    private static final String TAG = "BootUpgradeBiz";
+
+    // 文件下载工具类
+    private FinalFileLoad mFileLoad;
+
+    // app升级接口请求任务类
+    private AppUpgradeRequestTask mAppUpgradeRequestTask;
+
+    // app黑名单接口请求任务类
+    private AppBlackListRequestTask mAppBlackListRequestTask;
+
+    // 需要升级的apk
+    private List<LauncherAppUpgrade> needUpgradeList;
+
+    // 需要卸载的apk
+    private ArrayList<String> needUnInstallList = new ArrayList<>();
+
+    // 服务器返回的apk列表
+    private List<LauncherAppUpgrade> serviceApkList;
+
+    private PackageManager pm;
+
+    private Context mContext;
+
+    // 标识是否正在升级
+    private boolean isUpdating;
+
+    // 需要升级的apk总数
+    private int totalCount;
+
+    // 当前升级的个数
+    private int currentIndex;
+
+    // 当前手动安装的应用包名
+    private String currentHandleInstallPackage;
+
+    // 应用安装完成回调
+    private InstallCompCallback mCompCallback;
+
+    // 升级操作回调给MainActivity
+    private MainActivity.CmdCallback mCallback;
+
+    // 手动安装失败超时
+    private final static int MSG_HANDLE_INSTALL_TIME_OUT = 10001;
+
+    public interface InstallCompCallback {
+        void onIntallComplete(boolean result);
+    }
+
+    private BroadcastReceiver appReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Intent.ACTION_PACKAGE_ADDED)) {
+                String packageName = intent.getData().getSchemeSpecificPart();
+                LogUtil.i(TAG, "add package:  " + packageName);
+                handleInstallSuccess(packageName);
+            } else if (intent.getAction().equals(Intent.ACTION_PACKAGE_REPLACED)) {
+                String packageName = intent.getData().getSchemeSpecificPart();
+                LogUtil.i(TAG, "replace package:  " + packageName);
+                handleInstallSuccess(packageName);
+            }
+        }
+    };
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case FileSavePathUtil.MSG_GET_APP_UPGRADE_SUCCESS:
+                    isUpdating = true;
+                    try {
+                        serviceApkList = (List<LauncherAppUpgrade>) msg.obj;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (CommonUtil.isNotEmpty(serviceApkList)) {
+                        reset();
+                        checkNeedUpgradeApk();
+                    } else {
+                        // 没有检测到升级
+                        mAppBlackListRequestTask.excuteRequestChecked(0);
+                        isUpdating = false;
+                        if (mCallback != null) {
+                            mCallback.onCheckResult(false);
+                        }
+                    }
+                    break;
+
+                case MSG_HANDLE_INSTALL_TIME_OUT:
+                    updateAppInner();
+                    break;
+                case FileSavePathUtil.MSG_GET_APP_BLACKLIST_SUCCESS:
+                    try {
+                        needUnInstallList = (ArrayList<String>) msg.obj;
+                        PollingUnInstallBlackApk();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    };
+
+    public BootUpgradeBiz(Context context) {
+        mContext = context;
+        mFileLoad = new FinalFileLoad(context);
+        mAppUpgradeRequestTask = new AppUpgradeRequestTask(mHandler, context);
+        mAppBlackListRequestTask = new AppBlackListRequestTask(mHandler, context);
+        pm = context.getPackageManager();
+        needUpgradeList = new ArrayList<LauncherAppUpgrade>();
+        registerAppReceiver();
+        initInstallCompCallback();
+    }
+
+    public void setCallback(MainActivity.CmdCallback callback) {
+        mCallback = callback;
+    }
+
+    private void initInstallCompCallback() {
+        mCompCallback = new InstallCompCallback() {
+            @Override
+            public void onIntallComplete(boolean result) {
+                updateAppInner();
+            }
+        };
+    }
+
+    private void registerAppReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        intentFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
+        intentFilter.addDataScheme("package");
+        mContext.registerReceiver(appReceiver, intentFilter);
+    }
+
+    public boolean isUpdating() {
+        return isUpdating;
+    }
+
+    /**
+     * 开机或者网络恢复是获取所有需要升级的应用
+     */
+    public void checkUpgradeApp() {
+        LogUtil.i(TAG, "checkUpgradeApp ");
+        mAppUpgradeRequestTask.excuteRequestChecked(10 * 1000);
+    }
+
+    /**
+     * 外部推送检测升级指令，强制检测升级
+     */
+    public void forceUpgradeApp() {
+        LogUtil.i(TAG, "forceUpgradeApp ");
+        mAppUpgradeRequestTask.excuteRequestForced();
+    }
+
+    /**
+     * 立即检测升级
+     */
+    public void checkUpgradeImmediate() {
+        LogUtil.i(TAG, "checkUpgradeImmediate isUpdate:  " + isUpdating);
+        if (!isUpdating) {
+            mAppUpgradeRequestTask.excuteRequestImmediate();
+        } else {
+            if (mCallback != null) {
+                mCallback.onUpgradeProgress(currentIndex, totalCount);
+            }
+        }
+    }
+
+    /**
+     * 根据当前的包名判断升级完成之后，是否需要重启机器
+     */
+    private void checkReboot(String packageName) {
+        LauncherAppUpgrade currentApp = null;
+        if (packageName != null && CommonUtil.isNotEmpty(serviceApkList)) {
+            for (LauncherAppUpgrade mApp : serviceApkList) {
+                if (packageName.equals(mApp.getPkname())) {
+                    currentApp = mApp;
+                    break;
+                }
+            }
+        }
+        LogUtil.i(TAG, "checkReboot currentApp:  " + currentApp);
+        if (currentApp != null) {
+            PkgInstallObserver.checkReboot(currentApp.getExtra());
+        }
+    }
+
+    /**
+     * 处理手动应用安装成功
+     */
+    private void handleInstallSuccess(String packageName) {
+        if (currentHandleInstallPackage != null && currentHandleInstallPackage.equals(packageName)) {
+            currentHandleInstallPackage = null;
+            if (mHandler.hasMessages(MSG_HANDLE_INSTALL_TIME_OUT)) {
+                mHandler.removeMessages(MSG_HANDLE_INSTALL_TIME_OUT);
+            }
+            checkReboot(packageName);
+            updateAppInner();
+        }
+    }
+
+    private void rebootDevice() {
+        LogUtil.i(TAG, "show reboot alert dialog");
+        Observable.just(1).observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<Integer>() {
+            @Override
+            public void accept(Integer integer) throws Exception {
+                ShowRebootAlertBiz.getInstance(mContext).showRebootDialog();
+            }
+        });
+    }
+
+    /**
+     * 静默安装apk
+     *
+     * @param app      要安装的apk信息
+     * @param savePath 下载到本地的apk路径
+     */
+    private void installApkSilently(LauncherAppUpgrade app, String savePath) {
+        String pkgName = app.getPkname();
+        // mCallback不为空，说明是在开机全屏引导页，不需要提示
+        LzToast.showToast(mContext, "检测到应用有更新，正在为您升级" + app.getPkname(), 5000);
+        PkgInstallObserver observer = new PkgInstallObserver(mContext, savePath, app, mCompCallback);
+        try {
+            LogUtil.i(TAG, "开始静默安装apk，路径为： " + savePath + ";  packagename:  " + pkgName);
+            ApkManageBiz.autoInstallApk(mContext, savePath, pkgName, observer);
+        } catch (Exception e) {
+            e.printStackTrace();
+            LogUtil.i(TAG, "error " + e);
+        }
+    }
+
+    /**
+     * 下载apk，下载完成之后静默安装
+     *
+     * @param app 要下载的apk信息
+     */
+    public void downloadApk(final LauncherAppUpgrade app) {
+        String url = app.getDownurl();
+        String[] nameS = url.split("/");
+        String apkName = "d.apk";
+        if (nameS.length > 1) {
+            apkName = nameS[nameS.length - 1];
+        }
+        LogUtil.d(TAG, "下载的应用名是：" + apkName);
+        DownloadUrlInfo[] downloadInfo = new DownloadUrlInfo[1];
+        Map<String, Long> codeMap = new HashMap<>();
+        codeMap.put(url, CommonUtil.toLong(app.getCheckcode()));
+        downloadInfo[0] = new DownloadUrlInfo(url, 1, codeMap);
+        downloadInfo[0].setFileLocalPath(FileSavePathUtil.mApkLoadSavePath + apkName);
+        downloadInfo[0].setFileName(apkName);
+        LogUtil.i(TAG, "start downloadApk local save path: " + downloadInfo[0].getFileLocalPath());
+        mFileLoad.downloadFile(downloadInfo, new IDownloadInfoCallBack() {
+            @Override
+            public void onDownloadProgressCallback(long downloadsize, long totlesize) {
+            }
+
+            @Override
+            public void onDownloadCompleteCallback(String savePath) {
+                LogUtil.i(TAG, "downloadApk complete local save path: " + savePath);
+                if (CommonUtil.isNotEmpty(savePath)) {
+                    // 2019年3月28日 新增需求，对于 com.lzui.launcher，调用系统的应用安装方法
+                    if ("com.lzui.launcher".equals(app.getPkname())) {
+                        currentHandleInstallPackage = "com.lzui.launcher";
+                        mHandler.sendEmptyMessageDelayed(MSG_HANDLE_INSTALL_TIME_OUT, 30 * 1000);
+                        ApkUtil.installApkAndStart(mContext, savePath);
+                    } else {
+                        installApkSilently(app, savePath);
+                    }
+                } else {
+                    LogUtil.e("what wrong, download error");
+                    updateAppInner();
+                }
+            }
+
+            @Override
+            public void onDownloadSpaceNotEnough(String savepath) {
+                LogUtil.i(TAG, "download error. onDownloadSpaceNotEnough");
+            }
+
+            @Override
+            public void onDownloadFail() {
+                LogUtil.i(TAG, "download error. onDownloadFail");
+                updateAppInner();
+            }
+        }, FileSavePathUtil.mApkTempCachePath);
+    }
+
+    /**
+     * 检测app是否需要升级
+     *
+     * @param app 要升级的app
+     * @return 升级检测结果
+     */
+    private boolean checkApkUpgradeInfo(LauncherAppUpgrade app) {
+        // 是否需要升级
+        boolean isNeedUpgrade = false;
+        PackageInfo pInfo = null;
+        try {
+            LogUtil.i(TAG, "app pkgname " + app.getPkname());
+            pInfo = pm.getPackageInfo(app.getPkname(), PackageManager.GET_PERMISSIONS);
+            LogUtil.i(TAG, "根据包名获取包信息 " + app.getPkname() + ", 本地 version:  " + (pInfo == null ? null : pInfo.versionName)
+                    + ", verCode " + (pInfo == null ? null : pInfo.versionCode));
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            LogUtil.i(TAG, "本地没有安装该应用，包名为 " + app.getPkname());
+        }
+
+        LogUtil.i(TAG, "pInfo " + pInfo);
+        // pInfo == null 表示该应用本地未安装
+        if (app.getType() == AppProperty.APP_COMPATIBLE_UPGRADE) {
+            if (pInfo != null) {
+                if (app.getVsnCode() != 0) {
+                    isNeedUpgrade = app.getVsnCode() > pInfo.versionCode;
+                } else {
+                    isNeedUpgrade = Utils.compareVersion(app.getVsn(), pInfo.versionName) == 1;
+                }
+            }
+        } else if (app.getType() == AppProperty.APP_FORCE_UPGRADE) {
+            // 如果是要强制升级，只要版本号不相等，则直接升级安装新版本
+            if (pInfo != null) {
+                if (app.getVsnCode() != 0) {
+                    // 存在 vsnCode 使用 vsnCode 做版本判断
+                    isNeedUpgrade = app.getVsnCode() != pInfo.versionCode;
+                } else {
+                    isNeedUpgrade = !app.getVsn().equals(pInfo.versionName);
+                }
+            }
+        } else if (app.getType() == AppProperty.APP_FORCE_RECOMM) {
+            // 应用推荐，本地没有则直接安装
+            if (app.getVsnCode() != 0) {
+                isNeedUpgrade = pInfo == null || app.getVsnCode() > pInfo.versionCode;
+            } else {
+                isNeedUpgrade = pInfo == null || Utils.compareVersion(app.getVsn(), pInfo.versionName) == 1;
+            }
+        }
+        LogUtil.i(TAG, "isNeedUpgrade " + isNeedUpgrade + ", type " + app.getType() + ", " + app.getVsnCode());
+        return isNeedUpgrade;
+    }
+
+    /**
+     * 检测需要升级的应用
+     */
+    private void checkNeedUpgradeApk() {
+        for (LauncherAppUpgrade app : serviceApkList) {
+            try {
+                LogUtil.i(TAG, "checkNeedUpgradeApk appitem " + app);
+                if (checkApkUpgradeInfo(app)) {
+                    needUpgradeList.add(app);
+                }
+            } catch (Exception e) {
+                LogUtil.e(TAG, "应用升级失败，包名为 " + app.getPkname(), e);
+            }
+        }
+        if (needUpgradeList.size() > 0) {
+            totalCount = needUpgradeList.size();
+            LogUtil.i(TAG, "checkNeedUpgradeApk size:  " + needUpgradeList.size());
+            updateAppInner();
+            // 检测到升级,通知界面进行更新
+            if (mCallback != null) {
+                mCallback.onCheckResult(true);
+            }
+        } else {
+            // 没有检测到升级
+            if (mCallback != null) {
+                mCallback.onCheckResult(false);
+            }
+            isUpdating = false;
+            //处理黑名单APK静默卸载, 没有需要升级的APP列表的时候
+            mAppBlackListRequestTask.excuteRequestChecked(0);
+        }
+    }
+
+    /**
+     * 重置各个参数
+     */
+    public void reset() {
+        if (needUpgradeList != null && needUpgradeList.size() > 0) {
+            needUpgradeList.clear();
+        }
+        currentHandleInstallPackage = null;
+        MVDeviceConfig.needReboot = false;
+        totalCount = 0;
+        currentIndex = 0;
+    }
+
+    /**
+     * 开始处理升级
+     */
+    private void updateAppInner() {
+        LogUtil.i(TAG, "updateApp size:  " + needUpgradeList.size());
+        if (needUpgradeList.size() > 0) {
+            LauncherAppUpgrade mApp = needUpgradeList.remove(0);
+            int progress = totalCount - needUpgradeList.size();
+            currentIndex = progress;
+            if (mCallback != null) {
+                mCallback.onUpgradeProgress(progress, totalCount);
+            }
+            downloadApk(mApp);
+        } else {
+            LogUtil.i(TAG, "update completed isreboot:  " + MVDeviceConfig.needReboot);
+            if (totalCount > 0 && mCallback != null) {
+                mCallback.onUpgradeEnd();
+            }
+            isUpdating = false;
+            if (MVDeviceConfig.needReboot) {
+                rebootDevice();
+            } else { //处理黑名单APK静默卸载
+                mAppBlackListRequestTask.excuteRequestChecked(0);
+            }
+        }
+    }
+
+    private void PollingUnInstallBlackApk() {
+        if (needUnInstallList != null && needUnInstallList.size() > 0) {
+            String packageName = needUnInstallList.remove(0);
+            LogUtil.d(TAG, "unInstall packageName " + packageName);
+            if (!CommonUtil.isEmpty(packageName)) {
+                uninstallFilterSystemApp(packageName);
+            }
+        }
+    }
+
+
+    public void uninstallApp(String pkgname) {
+        try {
+            ApkManageBiz.autoUninstallApk(mContext, pkgname, (packageName, returnCode) -> {
+                LogUtil.i(TAG, "packageDeleted packageName " + packageName + ", returnCode " + returnCode);
+                if (returnCode == 1) {
+                    LogUtil.i(TAG, "packageDeleted success.");
+                }
+            });
+        } catch (Exception e) {
+            LogUtil.e(TAG, "卸载失败，包名为 " + pkgname, e);
+        }
+    }
+
+    /**
+     * 卸载非系统预装APP
+     *
+     * @param pkgname
+     */
+    public void uninstallFilterSystemApp(String pkgname) {
+        try {
+            ApkManageBiz.autoUninstallApkNoDelFile(mContext, pkgname, (packageName, returnCode) -> {
+                LogUtil.i(TAG, "packageDeleted packageName " + packageName + ", returnCode " + returnCode);
+                if (returnCode == 1) {
+                    LogUtil.i(TAG, "packageDeleted success.");
+                    PollingUnInstallBlackApk();
+                } else {
+                    //系统没有安装这个APK的情况
+                    LogUtil.e(TAG, "系统没有安装此APK，packageName " + pkgname);
+                    PollingUnInstallBlackApk();
+                }
+            });
+        } catch (Exception e) {
+            LogUtil.e(TAG, "卸载失败，包名为 " + pkgname, e);
+            PollingUnInstallBlackApk();
+        }
+    }
+}

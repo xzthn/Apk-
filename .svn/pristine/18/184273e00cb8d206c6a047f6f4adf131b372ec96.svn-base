@@ -1,0 +1,32 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 22
+        versionCode 16
+        versionName "2.4.3"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+}
+
+dependencies {
+    implementation files('libs/ZTEPortingSetting.jar')
+
+    compileOnly 'com.lunzn:tool:1.1.9'
+    compileOnly 'com.lunzn:file:1.0.5'
+    implementation 'com.major:http:1.0.4'
+
+}

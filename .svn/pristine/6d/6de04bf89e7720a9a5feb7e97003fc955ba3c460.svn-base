@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.lunzn.tool.autofit.AutoFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <com.lunzn.tool.autofit.AutoRelativeLayout
+        android:id="@+id/rl_step"
+        android:layout_width="460px"
+        android:layout_height="304px">
+
+        <com.lunzn.tool.autofit.AutoImageView
+            android:id="@+id/iv_step"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/step_progress" />
+
+        <ProgressBar
+            android:id="@+id/pb_progress"
+            style="@android:style/Widget.Holo.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="10px"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="100px"
+            android:layout_marginRight="120px"
+            android:layout_marginBottom="20px"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/progress_bar"
+            android:visibility="gone" />
+
+        <com.lunzn.tool.autofit.AutoTextView
+            android:id="@+id/tv_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="80px"
+            android:layout_marginBottom="18px"
+            android:text="1/2"
+            android:textColor="@android:color/white"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/ll_step_upgrade"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="14px">
+
+            <com.lunzn.tool.autofit.AutoButton
+                android:id="@+id/btn_confirm"
+                android:layout_width="90px"
+                android:layout_height="30px"
+                android:layout_marginRight="12px"
+                android:background="@drawable/selector_btn_bg"
+                android:text="确定"
+                android:textColor="#fff"
+                android:textSize="18px" />
+
+            <com.lunzn.tool.autofit.AutoButton
+                android:id="@+id/btn_cancel"
+                android:layout_width="90px"
+                android:layout_height="30px"
+                android:layout_marginLeft="12px"
+                android:background="@drawable/selector_btn_bg"
+                android:text="取消"
+                android:textColor="#fff"
+                android:textSize="18px" />
+        </LinearLayout>
+    </com.lunzn.tool.autofit.AutoRelativeLayout>
+
+
+    <com.lunzn.tool.autofit.AutoRelativeLayout
+        android:id="@+id/rl_success"
+        android:layout_width="460px"
+        android:layout_height="304px"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <com.lunzn.tool.autofit.AutoImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/step_success" />
+    </com.lunzn.tool.autofit.AutoRelativeLayout>
+
+    <com.lunzn.tool.autofit.AutoRelativeLayout
+        android:id="@+id/rl_failure"
+        android:layout_width="460px"
+        android:layout_height="304px"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <com.lunzn.tool.autofit.AutoImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/step_failure" />
+    </com.lunzn.tool.autofit.AutoRelativeLayout>
+
+    <com.lunzn.tool.autofit.AutoRelativeLayout
+        android:id="@+id/rl_battery"
+        android:layout_width="460px"
+        android:layout_height="304px"
+        android:visibility="gone">
+
+        <com.lunzn.tool.autofit.AutoImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/step_battery" />
+
+        <com.lunzn.tool.autofit.AutoButton
+            android:id="@+id/btn_ok"
+            android:layout_width="90px"
+            android:layout_height="30px"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="14px"
+            android:background="@drawable/selector_btn_bg"
+            android:nextFocusLeft="@id/btn_ok"
+            android:nextFocusRight="@id/btn_ok"
+            android:text="确定"
+            android:textColor="#fff"
+            android:textSize="18px" />
+    </com.lunzn.tool.autofit.AutoRelativeLayout>
+
+</com.lunzn.tool.autofit.AutoFrameLayout>

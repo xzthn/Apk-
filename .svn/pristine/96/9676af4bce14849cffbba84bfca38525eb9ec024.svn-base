@@ -1,0 +1,153 @@
+package com.lzui.apkupgrade.service;
+
+import android.app.Service;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Binder;
+import android.os.IBinder;
+
+import com.alibaba.fastjson.JSON;
+import com.lunzn.tool.log.LogUtil;
+import com.lunzn.tool.util.CommonUtil;
+import com.lzui.apkupgrade.activity.MainActivity;
+import com.lzui.apkupgrade.biz.BootUpgradeBiz;
+import com.lzui.apkupgrade.biz.NetCheckBiz;
+import com.lzui.apkupgrade.data.ExternalActions;
+import com.platform.sdk.m2.bean.launcher.LauncherAppUpgrade;
+import com.realsil.ota.DfuController;
+
+public class ExternalActionService extends Service {
+
+    private static final String TAG = "BootUpgradeBiz";
+
+    /**
+     * 检测apk升级业务类
+     */
+    private BootUpgradeBiz mUpgradeBiz;
+
+    /**
+     * launcher是否广告播放完成，之后当广告播放完成才能进行升级检测
+     */
+    private boolean isAdvCompleted = false;
+
+    /**
+     * 升级操作回调
+     */
+    private MainActivity.CmdCallback mCmdCallback;
+
+    /**
+     * 遥控器连接状态变更监听action
+     */
+    public static final String ACTION_CONNECTION_STATE_CHANGED = "android.bluetooth.input.profile.action.CONNECTION_STATE_CHANGED";
+
+    /**
+     * 遥控器固件广播
+     */
+    private RCUReconnectReceiver mRCUReconnectReceiver;
+
+
+    public class UpgradeBinder extends Binder {
+        public void setCmdCallback(MainActivity.CmdCallback mCallback) {
+            mCmdCallback = mCallback;
+            mUpgradeBiz.setCallback(mCallback);
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        initData();
+        LogUtil.i(TAG, "onCreate");
+        registerAppReceiver();
+        boolean isConnected = NetCheckBiz.isNetworkConnected(this);
+        if (isConnected) {
+            mUpgradeBiz.checkUpgradeApp();
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        LogUtil.i(TAG, "onStartCommand intent " + CommonUtil.toUri(intent));
+        if (intent != null && intent.hasExtra("event")) {
+            String event = intent.getStringExtra("event");
+            LogUtil.i(TAG, "event: " + event + ", isAdvCompleted2 " + isAdvCompleted);
+
+            // 一定要等广告播放完成之后再进行升级检测
+            if (ExternalActions.EVENT_APP_UPGRADE_CHECK.equals(event)) {
+                mUpgradeBiz.checkUpgradeApp();
+            } else if (ExternalActions.EVENT_APP_UPGRADE_IMMEDIATE.equals(event)) {
+                mUpgradeBiz.checkUpgradeImmediate();
+            } else if (ExternalActions.EVENT_APP_UPGRADE_FORCED.equals(event)) {
+                mUpgradeBiz.forceUpgradeApp();
+            } else if (ExternalActions.EVENT_LAUNCHER_ADV_COMPLETED.equals(event)) {
+                isAdvCompleted = true;
+                mUpgradeBiz.checkUpgradeApp();
+            } else if (ExternalActions.CHECK_APPS_UPGRADE.equals(event)) {
+                mUpgradeBiz.forceUpgradeApp();
+            } else if (ExternalActions.EVENT_CHECK_FIRMWARE_UPGRADE.equals(event)) {
+                // 推送固件升级
+                // adb shell am startservice -n com.lzui.apkcheck/com.lzui.apkupgrade.service.ExternalActionService -a service.handle.push.event -e event CHECK_FIRMWARE_UPGRADE
+                LogUtil.i(TAG, "onStartCommand CHECK_FIRMWARE_UPGRADE");
+                DfuController.getInstance().checkUpgradeForce();
+            } else if (ExternalActions.EVENT_SINGLE_APP_INSTALL.equals(event)) {
+                mUpgradeBiz.reset();
+                String data = intent.getStringExtra("data");
+                LauncherAppUpgrade app = JSON.parseObject(data, LauncherAppUpgrade.class);
+                mUpgradeBiz.downloadApk(app);
+            } else if (ExternalActions.EVENT_SINGLE_APP_UNINSTALL.equals(event)) {
+                mUpgradeBiz.reset();
+                String data = intent.getStringExtra("data");
+                LauncherAppUpgrade app = JSON.parseObject(data, LauncherAppUpgrade.class);
+                mUpgradeBiz.uninstallApp(app.getPkname());
+            }
+        }
+        return START_NOT_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mRCUReconnectReceiver != null) {
+            unregisterReceiver(mRCUReconnectReceiver);
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return new UpgradeBinder();
+    }
+
+    private void initData() {
+        mUpgradeBiz = new BootUpgradeBiz(this);
+    }
+
+    private void registerAppReceiver() {
+        LogUtil.i(TAG, "registerAppReceiver 遥控器固件广播");
+        mRCUReconnectReceiver = new RCUReconnectReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_CONNECTION_STATE_CHANGED);
+        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        registerReceiver(mRCUReconnectReceiver, filter);
+    }
+
+    public class RCUReconnectReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            LogUtil.i(TAG, "RCUReconnectReceiver " + CommonUtil.toUri(intent));
+            String action = intent.getAction();
+            if (ACTION_CONNECTION_STATE_CHANGED.equals(action)) {
+                int inputDeviceState = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+                if (inputDeviceState == BluetoothProfile.STATE_CONNECTED) {
+                    LogUtil.w(TAG, " Braodcast: RCU Connected! ");
+                    // 检查遥控器固件升级
+                    DfuController.getInstance().checkUpgradeForce();
+                }
+            }
+        }
+    }
+}

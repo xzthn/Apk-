@@ -1,0 +1,1332 @@
+package com.realsil.ota;
+
+import android.app.Application;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
+import android.text.TextUtils;
+import android.webkit.MimeTypeMap;
+
+import com.android.settings.porting.PrivateSettingCommon;
+import com.google.gson.Gson;
+import com.lunzn.download.FinalFileLoad;
+import com.lunzn.download.command.DownloadUrlInfo;
+import com.lunzn.download.util.IDownloadInfoCallBack;
+import com.lunzn.tool.log.LogUtil;
+import com.lunzn.tool.util.CommonUtil;
+import com.realsil.android.blehub.dfu.BinInputStream;
+import com.realsil.android.blehub.dfu.GlobalGatt;
+import com.realsil.android.blehub.dfu.MergeFileManager;
+import com.realsil.android.blehub.dfu.RealsilDfu;
+import com.realsil.android.blehub.dfu.RealsilDfuCallback;
+import com.realsil.api.ApiRetrofit;
+import com.realsil.api.ApiService;
+import com.realsil.api.RespParam;
+import com.realsil.api.UpgradeResp;
+import com.smart.localfile.LocalFileCRUDUtils;
+import com.smart.localfile.LocalFileZipUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import okhttp3.RequestBody;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
+/**
+ * Desc: 固件升级操作类
+ * <p>
+ * Author: meijie
+ * PackageName: com.realsil.ota
+ * ProjectName: APKCheck
+ * Date: 2018/11/22 16:04
+ */
+public class DfuController {
+
+    private static final String TAG = "DfuController";
+    /*
+     * DFU Service UUID
+     */
+    public static final UUID DFU_SERVICE_UUID = UUID.fromString("00006287-3c17-d293-8e48-14fe2e4da212");
+    private static final String DATA_FILE_PATH = "file_path";
+    private static final String DATA_FILE_STREAM = "file_stream";
+    private static final String DATA_STATUS = "status";
+    private static final String EXTRA_URI = "uri";
+    private static final boolean D = true;
+    private static final int SELECT_FILE_REQ = 1;
+    private static final int REQUEST_ENABLE_BT = 2;
+    // Handle msg
+    private static final int OTA_FIND_CHARAC_SUCCESS = 0;
+    private static final int OTA_GATT_CONNECTIION_FAIL = 1;
+    private static final int OTA_GATT_DISCOVERY_FAIL = 2;
+    private static final int OTA_GET_SERVICE_FAIL = 3;
+    private static final int OTA_GET_CHARA_FAIL = 4;
+    private static final int OTA_START_OTA_PROCESS = 5;
+    private static final int OTA_GET_TARGET_APP_VERSION = 6;
+    private static final int OTA_GET_TARGET_PATCH_VERSION = 7;
+    private static final int OTA_GET_FILE_INFO_SUCCESS = 8;
+    private static final int OTA_GET_FILE_INFO_FAIL = 9;
+    private static final int OTA_CALLBACK_STATE_CHANGE = 10;
+    private static final int OTA_CALLBACK_PROCESS_CHANGE = 11;
+    private static final int OTA_CALLBACK_SUCCESS = 12;
+    private static final int OTA_CALLBACK_ERROR = 13;
+    private static final int OTA_GET_DFU_SERVICE = 14;
+    private static final int OTA_GET_SILENT_MODE_SERVICE = 15;
+    private static final int OTA_GET_TARGET_BANK_INFO = 16;
+    private static final int OTA_GET_TARGET_PATCH_EXTENSION_INFO = 17;
+    private static final int OTA_GET_EXTEND_MODE_SERVICE = 18;
+    private static final int OTA_CONNECT = 19;
+    private static final int OTA_WAIT_FOR_REFRESH = 20;
+    private static final int NOTIFY_UNPAIR = 21;
+
+    //private final UUID[] serviceUuids = {UUID.fromString("00006287-3c17-d293-8e48-14fe2e4da212")};
+    //private final UUID[] serviceUuids = {UUID.fromString("0x6287")};
+    private final static UUID OTA_SERVICE_UUID = UUID.fromString("0000ffd0-0000-1000-8000-00805f9b34fb");
+    //Modify for new spec
+    private static final UUID NEW_OTA_SERVICE_UUID = UUID.fromString("0000d0ff-3c17-d293-8e48-14fe2e4da212");
+    private final static UUID OTA_CHARACTERISTIC_UUID = UUID.fromString("0000ffd1-0000-1000-8000-00805f9b34fb");
+    private final static UUID OTA_READ_PATCH_CHARACTERISTIC_UUID = UUID.fromString("0000ffd3-0000-1000-8000-00805f9b34fb");
+    private final static UUID OTA_READ_APP_CHARACTERISTIC_UUID = UUID.fromString("0000ffd4-0000-1000-8000-00805f9b34fb");
+    private final static UUID DEVICE_INFO_SERVICE_UUID = UUID.fromString("0000180a-0000-1000-8000-00805f9b34fb");
+    private final static UUID PNP_ID_CHARACTERISTIC_UUID = UUID.fromString("00002a50-0000-1000-8000-00805f9b34fb");
+
+    private static final UUID GATT_DEVICE_SERVICE_UUID = UUID.fromString("0000180a-0000-1000-8000-00805f9b34fb");// added by jmf20161024
+    private static final UUID GATT_FIRMWARE_VERSION_CHARACTERISTIC_UUID = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");// added by jmf 20161024
+
+    // Add for silent OTA upload.
+    private final static UUID OTA_READ_BANK_CHARACTERISTIC_UUID = UUID.fromString("0000fff1-0000-1000-8000-00805f9b34fb");
+    // Add for extend OTA upload.
+    private final static UUID OTA_EXTEND_FLASH_CHARACTERISTIC_UUID = UUID.fromString("00006587-3c17-d293-8e48-14fe2e4da212");
+    // Add for read patch extend.
+    private final static UUID OTA_READ_PATCH_EXTENSION_CHARACTERISTIC_UUID = UUID.fromString("0000ffd5-0000-1000-8000-00805f9b34fb");
+
+    // escape fast click
+    private static long lastClickTime;
+    private int mTotalSpeedInSilentMode = -1;
+    private static StepDialog mStepDialog; // 升级对话框
+
+    // Alarm timer
+//    Handler mProgressBarSuperHandler = new Handler();
+//    private boolean mUpdateSuccessful = false;
+//    private boolean mStatusOk;
+//    private String mDeviceName;
+    private String mDeviceAddress;
+    private long mOtaStartTime = 0;
+    private long mOtaImageSendStartTime = 0;
+    private BinInputStream mBinInputStream;
+    private int newFwVersion;
+    private int oldFwVersion;
+    private int newPatchVersion;
+    private int oldPatchVersion;
+    private int targetPatchExtensionVersion;
+    private int targetBankInfo;
+    private Uri mFileStreamUri;
+    private boolean isSelectedSilentModeDevice = false;
+    private MergeFileManager mMergeFileManager;
+
+    private BluetoothGattCharacteristic mReadAppCharacteristic;
+    private BluetoothGattCharacteristic mReadPatchCharacteristic;
+    private BluetoothGattCharacteristic mReadBankCharacteristic;
+    private BluetoothGattCharacteristic mReadPatchExtensionCharacteristic;
+
+    // dfu object
+    private RealsilDfu dfu = null;
+    private BluetoothAdapter mBtAdapter;
+    private BluetoothGatt mBtGatt;
+    private BluetoothDevice mSelectedDevice;
+    private GlobalGatt mGlobalGatt;
+    private BluetoothInputDeviceManager mBluetoothInputDeviceManager;
+    private int mFileCount; // 待安装文件个数
+    private int mFileIndex; // 正在安装的文件
+    private String mDeviceName;
+    private boolean mIsZip; // 下载的是否是 zip 包
+    private String[] mPaths; // 下载的 bin 路径列表
+    private String mDir; // 文件下载父目录
+    private String mFirmwareVersion;
+    private boolean mIsUpdating; // 是否是正在升级
+    private boolean mNeedRequest; // 是否需要发起升级检测，过滤多次网络连接发起的升级请求
+    private Application mApplication;
+    private boolean mIsNameMatch; // 升级前的遥控器名称是否与升级后遥控器名称相同
+    private BluetoothDevice mBluetoothDevice;
+
+    @SuppressWarnings("handlerLeak")
+    private Handler mHandle = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (D) {
+                LogUtil.d(TAG, "MSG No " + msg.what);
+            }
+            switch (msg.what) {
+                case NOTIFY_UNPAIR:
+                    notifyReconnect();
+                    break;
+                case OTA_FIND_CHARAC_SUCCESS:
+                    // Add Progress bar.
+//                    cancelProgressBar();
+                    showToast(R.string.toast_gatt_connect);
+                    // set the dfu service work mode
+                    if (!dfu.setWorkMode(RealsilDfu.OTA_MODE_FULL_FUNCTION)) {
+                        showToast(R.string.toast_some_error_in_set_ota_mode);
+                        mGlobalGatt.disconnectGatt(mDeviceAddress);
+                    }
+                    break;
+                case OTA_GET_SILENT_MODE_SERVICE:
+                    // Add Progress bar.
+//                    cancelProgressBar();
+                    showToast(R.string.toast_gatt_connect);
+                    isSelectedSilentModeDevice = true;
+                    break;
+                case OTA_GET_EXTEND_MODE_SERVICE:
+                    // Add Progress bar.
+//                    cancelProgressBar();
+                    showToast(R.string.toast_gatt_connect);
+                    int mode = RealsilDfu.OTA_MODE_EXTEND_FUNCTION;
+                    // set the dfu service work mode
+                    if (!dfu.setWorkMode(mode)) {
+                        showToast(R.string.toast_some_error_in_set_ota_mode);
+                        mGlobalGatt.disconnectGatt(mDeviceAddress);
+                    }
+                    break;
+                case OTA_GET_TARGET_PATCH_VERSION:
+
+                    break;
+                case OTA_GET_TARGET_APP_VERSION:
+                    // 获取到版本号
+                    // 请求升级信息
+                    requestUpgrade();
+                    break;
+                case OTA_GET_TARGET_BANK_INFO:
+
+                    break;
+                case OTA_GET_TARGET_PATCH_EXTENSION_INFO:
+
+                    break;
+                case OTA_GET_DFU_SERVICE:
+                    // Add Progress bar.
+//                    cancelProgressBar();
+                    // in dfu mode can not get version info
+                    showToast(R.string.toast_dfu_gatt_connect);
+                    // set the dfu service work mode
+                    if (!dfu.setWorkMode(RealsilDfu.OTA_MODE_LIMIT_FUNCTION)) {
+                        showToast(R.string.toast_some_error_in_set_ota_mode);
+                        mGlobalGatt.disconnectGatt(mDeviceAddress);
+                    }
+                    break;
+                case OTA_GET_FILE_INFO_SUCCESS:
+
+                    break;
+                case OTA_GET_FILE_INFO_FAIL:
+
+                    break;
+                case OTA_CALLBACK_PROCESS_CHANGE:
+                    if (mOtaImageSendStartTime == 0) {
+                        mOtaImageSendStartTime = System.currentTimeMillis();
+                    }
+                    mStepDialog.setProgress(msg.arg1);
+                    break;
+                case OTA_CALLBACK_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case RealsilDfu.STA_ORIGIN:
+                            LogUtil.i("STA_ORIGIN");
+//                            mTextUploading.setText("STA_ORIGIN");
+                            break;
+                        case RealsilDfu.STA_REMOTE_ENTER_OTA:
+                            LogUtil.i("STA_REMOTE_ENTER_OTA");
+//                            mTextUploading.setText("STA_REMOTE_ENTER_OTA");
+                            break;
+                        case RealsilDfu.STA_FIND_OTA_REMOTE:
+                            LogUtil.i("STA_FIND_OTA_REMOTE");
+//                            mTextUploading.setText("STA_FIND_OTA_REMOTE");
+                            break;
+                        case RealsilDfu.STA_CONNECT_OTA_REMOTE:
+                            LogUtil.i("STA_CONNECT_OTA_REMOTE");
+//                            mTextUploading.setText("STA_CONNECT_OTA_REMOTE");
+                            break;
+                        case RealsilDfu.STA_START_OTA_PROCESS:
+                            LogUtil.i("STA_START_OTA_PROCESS");
+//                            mTextUploading.setText("STA_START_OTA_PROCESS");
+                            break;
+                        case RealsilDfu.STA_OTA_UPGRADE_SUCCESS:
+                            LogUtil.i("STA_OTA_UPGRADE_SUCCESS");
+//                            mTextUploading.setText("STA_OTA_UPGRADE_SUCCESS");
+
+                            // Here need let user to check active the image or not
+                            if ((dfu.getWorkMode() & RealsilDfu.OTA_MODE_SILENT_UPLOAD_MASK) != 0) {
+//                                showActiveImageDialog();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case OTA_CALLBACK_SUCCESS:
+//                    mUpdateSuccessful = true;
+                    showToast(String.format(mApplication.getString(R.string.toast_ota_success), String.valueOf(msg.arg1)));
+                    long currentTime = System.currentTimeMillis();
+                    if (D) {
+                        LogUtil.i(TAG, "Transfer of Ota progress has taken " + (currentTime -
+                                mOtaStartTime) + " ms");
+                    }
+                    if (D) {
+                        LogUtil.i(TAG, "Transfer of Ota image has taken " + (currentTime - mOtaImageSendStartTime) + " ms");
+                    }
+                    if (mFileIndex == mFileCount) {
+                        mStepDialog.showSuccess();
+                        mIsUpdating = false;
+                        close();
+
+                        if (!mIsNameMatch) {
+                            LogUtil.w(TAG, "遥控器名称不匹配，需要断开遥控器，重新配对");
+                            // 断开配对
+                            m_Interface.unPair(mBluetoothDevice);
+
+                            mHandle.sendEmptyMessageDelayed(NOTIFY_UNPAIR, 2 * 1000);
+                        }
+                    } else {
+                        if (mGlobalGatt != null) {
+                            mGlobalGatt.close(mDeviceAddress);
+                        }
+                        // 传输成功后需要等 profile 刷新，大约需要 10s
+                        mHandle.sendEmptyMessageDelayed(OTA_WAIT_FOR_REFRESH, 10 * 1000);
+                    }
+                    break;
+                case OTA_WAIT_FOR_REFRESH:
+                    // 继续安装
+                    if (D) {
+                        LogUtil.i(TAG, "继续安装=================");
+                    }
+                    startOtaProcess(mPaths[mFileIndex]);
+                    break;
+                case OTA_CONNECT:
+                    connect( false);
+                    break;
+                case OTA_CALLBACK_ERROR:
+                    mIsUpdating = false;
+                    showToast(String.format(mApplication.getString(R.string.toast_ota_failed), String.valueOf(msg.arg1)));
+//                    mUpdateSuccessful = false;
+                    // 269 为电池电量低
+                    if (msg.arg1 == 269) {
+                        mStepDialog.showLowBattery();
+                    } else {
+                        mStepDialog.showFailure();
+                    }
+                    break;
+                case OTA_GATT_CONNECTIION_FAIL:
+                case OTA_GATT_DISCOVERY_FAIL:
+                case OTA_GET_CHARA_FAIL:
+                case OTA_GET_SERVICE_FAIL:
+                    mIsUpdating = false;
+//                    cancelProgressBar();
+                    showToast(String.format(mApplication.getString(R.string.toast_ota_initial_connect_failed), String.valueOf(msg.what)));
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    private void notifyReconnect() {
+        // 通知 remoteConnect 重新连接
+        Intent pairIntent = new Intent("com.lunzn.remote.connect.handler");
+        pairIntent.setPackage("com.lzui.remoteconnect");
+        pairIntent.putExtra("type", "home_check_start_scan");
+        mApplication.startService(pairIntent);
+    }
+
+    private DfuController(){
+
+    }
+
+    private static class HOLDER {
+        private static DfuController INSTANCE = new DfuController();
+    }
+
+    // 使用单例
+    public static DfuController getInstance() {
+        return HOLDER.INSTANCE;
+    }
+
+    private void requestUpgrade() {
+        LogUtil.i(TAG, "requestUpgrade");
+
+        RespParam param = new RespParam();
+        param.setPackageName(mApplication.getPackageName());
+        param.setChannel(mDeviceName);
+        List<RespParam.UpgradeTypesBean> types = new ArrayList<>();
+        types.add(new RespParam.UpgradeTypesBean("firmware", mFirmwareVersion));
+        types.add(new RespParam.UpgradeTypesBean("patch", String.valueOf(oldPatchVersion)));
+        param.setUpgradeTypes(types);
+
+        String obj = new Gson().toJson(param);// json
+        LogUtil.i(TAG, "requestUpgrade " + obj);
+        RequestBody body = RequestBody.create(okhttp3.MediaType.parse("application/json; charset=utf-8"), obj);
+        ApiRetrofit.getInstance().getService(ApiService.class).getUpgrade(body)
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<UpgradeResp>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        LogUtil.e(TAG, "requestUpgrade onError " + e);
+                        mIsUpdating = false;
+                        mNeedRequest = true;
+                    }
+
+                    @Override
+                    public void onNext(UpgradeResp upgradeResp) {
+                        LogUtil.i(TAG, "requestUpgrade " + upgradeResp);
+                        if (upgradeResp.getRetCode() == 0) {
+                            // 请求成功
+                            List<UpgradeResp.UpgradeListBean> upgradeList = upgradeResp.getUpgradeList();
+                            if (upgradeList != null && !upgradeList.isEmpty()) {
+                                UpgradeResp.UpgradeListBean bean = upgradeList.get(0);
+                                // 判断升级遥控器前后名称是否相同
+                                mIsNameMatch = mDeviceName.equals(bean.getDstChannel());
+
+                                downloadFile(bean);
+                            } else {
+                                LogUtil.i(TAG, "requestUpgrade 没有升级信息 ");
+                                close();
+                                mIsUpdating = false;
+                            }
+                        } else {
+                            LogUtil.e(TAG, "requestUpgrade 业务处理失败 " + upgradeResp.getRetCode());
+                            close();
+                            mIsUpdating = false;
+                        }
+                    }
+                });
+    }
+
+    private void downloadFile(UpgradeResp.UpgradeListBean bean) {
+        String url = bean.getDownloadUrl();
+        long checkCode = 0L;
+        try {
+            checkCode = Long.parseLong(bean.getCheckCode());
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
+        FinalFileLoad mFileLoad = new FinalFileLoad(mApplication);
+        DownloadUrlInfo[] downloadInfo = new DownloadUrlInfo[1];
+        Map<String, Long> codeMap = new HashMap<>();
+        codeMap.put(url, checkCode);
+        downloadInfo[0] = new DownloadUrlInfo(url, 3, codeMap);
+
+        String apkName = url.substring(url.lastIndexOf("/"));
+        mIsZip = url.endsWith(".zip");
+
+        String path = mDir + "/" + apkName;
+        LogUtil.i(TAG, "文件路径 path " + path + ", checkCode " + checkCode);
+
+        String cachePath = mDir + "/tmp/" + apkName;
+        downloadInfo[0].setFileLocalPath(path);
+        downloadInfo[0].setFileName(apkName);
+        LogUtil.i(TAG, "downloadFile path: " + downloadInfo[0].getFileLocalPath());
+        mFileLoad.downloadFile(downloadInfo, new IDownloadInfoCallBack() {
+            @Override
+            public void onDownloadProgressCallback(long downloadsize, long totlesize) {
+
+            }
+
+            @Override
+            public void onDownloadCompleteCallback(String savePath) {
+                LogUtil.w(TAG, "download success " + savePath);
+                // 检查文件
+                boolean result = true;
+                if (mIsZip) {
+                    // 解压文件
+                    mPaths = unZip(savePath, mDir + "/zip");
+                    if (mPaths == null) {
+                        LogUtil.e(TAG, "解压文件失败");
+                        return;
+                    }
+                    for (String s : mPaths) {
+                        boolean b = LoadFileInfo(s);
+                        if (!b) {
+                            result = false;
+                            break;
+                        }
+                    }
+                } else {
+                    mPaths = new String[]{savePath};
+                    result = LoadFileInfo(savePath);
+                }
+                LogUtil.w(TAG, "download success mPaths " + Arrays.toString(mPaths));
+                mFileCount = mPaths.length;
+                mFileIndex = 0;
+
+                // 删除临时文件
+                LocalFileCRUDUtils.deleteFile(mDir + "/tmp");
+
+                if (result) {
+                    // 提示升级
+                    showUpgrade();
+                } else {
+                    LogUtil.i(TAG, "加载文件失败 ");
+                    mIsUpdating = false;
+                }
+            }
+
+            @Override
+            public void onDownloadSpaceNotEnough(String savePath) {
+                LogUtil.e(TAG, "onDownloadSpaceNotEnough ");
+                mIsUpdating = false;
+            }
+
+            @Override
+            public void onDownloadFail() {
+                LogUtil.e(TAG, "onDownloadFail ");
+                mIsUpdating = false;
+            }
+        }, cachePath);
+    }
+
+    /**
+     * 解压文件，删除压缩文件
+     */
+    private String[] unZip(String path, String dest) {
+        LogUtil.i("解压文件 path " + path + ", dest " + dest);
+        // 解压前删除存在的目的目录
+        LocalFileCRUDUtils.deleteFile(dest);
+        List<String> strings = LocalFileZipUtils.unZipFile(path, dest);
+        // 删除压缩文件
+        LocalFileCRUDUtils.deleteFile(path);
+
+        String[] list = new File(dest).list();
+        // 与后台协定，压缩包内为一个目录，目录下为升级的文件
+        if (list != null && list.length == 1) {
+            File file = new File(dest + "/", list[0]);
+            LogUtil.i("解压文件 " + file.getAbsolutePath());
+            File[] files = new File(dest + "/", list[0]).listFiles();
+            String[] ret = new String[files.length];
+            for (int i = 0; i < files.length; i++) {
+                ret[i] = files[i].getAbsolutePath();
+            }
+            return ret;
+        }
+
+        LogUtil.e(TAG, "解压文件出现失败 path " + path + ", strings " + strings);
+        return null;
+    }
+
+    private RealsilDfuCallback cb = new RealsilDfuCallback() {
+        public void onServiceConnectionStateChange(boolean status, RealsilDfu d) {
+            if (D) {
+                LogUtil.e(TAG, "RealsilDfuCallback status: " + status);
+            }
+            if (status) {
+                showToast(R.string.toast_dfu_service_connect);
+                dfu = d;
+                dfu.setBatteryCheck(true);
+                // 延时连接设备
+                LogUtil.i("延时主动连接设备");
+                mHandle.sendEmptyMessageDelayed(OTA_CONNECT, 5000);
+            } else {
+                showToast(R.string.toast_dfu_service_disconnect);
+                dfu = null;
+            }
+        }
+
+        public void onError(int e) {
+            if (D) {
+                LogUtil.e(TAG, "RealsilDfuCallback onError: " + e);
+            }
+
+            // send msg to update ui
+            Message msg = mHandle.obtainMessage(OTA_CALLBACK_ERROR);
+            msg.arg1 = e;
+            mHandle.sendMessage(msg);
+        }
+
+        public void onSucess(int s) {
+            if (D) {
+                LogUtil.e(TAG, "onSucess: " + s);
+            }
+
+            if (mFileIndex == mFileCount) {
+                // 安装成功，删除原始文件
+                LogUtil.i(TAG, "删除文件 ");
+                LocalFileCRUDUtils.deleteFile(mDir + "/zip");
+            }
+
+            // send msg to update ui
+            Message msg = mHandle.obtainMessage(OTA_CALLBACK_SUCCESS);
+            msg.arg1 = s;
+            mHandle.sendMessage(msg);
+
+        }
+
+        public void onProcessStateChanged(int state) {
+            if (D) {
+                LogUtil.e(TAG, "onProcessStateChanged: " + state);
+            }
+
+            // send msg to update ui
+            Message msg = mHandle.obtainMessage(OTA_CALLBACK_STATE_CHANGE);
+            msg.arg1 = state;
+            mHandle.sendMessage(msg);
+        }
+
+        public void onProgressChanged(int progress) {
+//            if (D) {
+//                LogUtil.e(TAG, "onProgressChanged: " + progress);
+//            }
+
+            // send msg to update ui
+            Message msg = mHandle.obtainMessage(OTA_CALLBACK_PROCESS_CHANGE);
+            msg.arg1 = progress;
+            mHandle.sendMessage(msg);
+        }
+    };
+
+    BluetoothInputDeviceManager.HidConnectionCallback mHidConnectCallback = new BluetoothInputDeviceManager.HidConnectionCallback() {
+        @Override
+        public void onConnectionStateChange(boolean connect) {
+            if (D) {
+                LogUtil.d(TAG, "onConnectionStateChange: " + connect);
+            }
+//            cancelProgressBar();
+            if (connect) {
+                connectWithGatt();
+            } else {
+                showToast(R.string.connect_hid_profile_failed);
+            }
+        }
+    };
+
+    private BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (D) {
+                LogUtil.d(TAG, "onConnectionStateChange: status = " + status + ",newState = " + newState);
+            }
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    if (D) {
+                        LogUtil.d(TAG, "device connected. gatt = " + gatt);
+                    }
+                    // get the Bluetooth gatt.
+                    mBtGatt = mGlobalGatt.getBluetoothGatt(mDeviceAddress);
+                    if (gatt == null) {
+                        if (D) {
+                            LogUtil.e(TAG, "gatt is null");
+                        }
+                    } else {
+                        //LogUtil.d(TAG, "Start to Refresh Services");
+                        //refreshDeviceCache(gatt);
+                        if (D) {
+                            LogUtil.d(TAG, "Start to Discovery");
+                        }
+                        gatt.discoverServices();
+                    }
+                } else if ((newState == BluetoothProfile.STATE_DISCONNECTED)) {
+                    if (D) {
+                        LogUtil.e(TAG, "disconnect, try to close gatt");
+                    }
+                    mGlobalGatt.close(mDeviceAddress);
+                    mBtGatt = null;
+                }
+
+            } else {
+                mHandle.sendMessage(mHandle.obtainMessage(OTA_GATT_CONNECTIION_FAIL));
+                mGlobalGatt.close(mDeviceAddress);
+                mBtGatt = null;
+            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            if (D) {
+                LogUtil.d(TAG, "onServicesDiscovered: status = " + status);
+            }
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                BluetoothGattService service = gatt.getService(OTA_SERVICE_UUID);
+                if (service == null) {
+                    LogUtil.w(TAG, "OTA service not found");
+                    service = gatt.getService(NEW_OTA_SERVICE_UUID);
+                    if (service == null) {
+                        LogUtil.e(TAG, "new OTA service not found");
+                        //mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_SERVICE_FAIL));
+                        // Try to find the DFU service, may devices is already in OTA mode
+                        service = gatt.getService(DFU_SERVICE_UUID);
+                        if (service == null) {
+                            mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_SERVICE_FAIL));
+                        } else {
+                            if (D) {
+                                LogUtil.d(TAG, "DFU service = " + service.getUuid());
+                            }
+                            mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_DFU_SERVICE));
+                        }
+                        return;
+                    }
+                } else {
+                    if (D) {
+                        LogUtil.d(TAG, "OTA service = " + service.getUuid());
+                    }
+                }
+
+                mReadAppCharacteristic = service.getCharacteristic(OTA_READ_APP_CHARACTERISTIC_UUID);
+                if (mReadAppCharacteristic == null) {
+                    if (D) {
+                        LogUtil.e(TAG, "OTA read app characteristic not found");
+                    }
+                    mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_CHARA_FAIL));
+                    return;
+                } else {
+                    if (D) {
+                        LogUtil.d(TAG, "mEnterOTACharacteristic = " + mReadAppCharacteristic.getUuid());
+                    }
+                    readDeviceInfo(mReadAppCharacteristic);
+                }
+
+                mReadPatchCharacteristic = service.getCharacteristic(OTA_READ_PATCH_CHARACTERISTIC_UUID);
+                if (mReadPatchCharacteristic == null) {
+                    if (D) {
+                        LogUtil.e(TAG, "OTA read patch version characteristic not found");
+                    }
+                    mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_CHARA_FAIL));
+                    return;
+                } else {
+                    if (D) {
+                        LogUtil.d(TAG, "mReadPatchCharacteristic = " + mReadPatchCharacteristic.getUuid());
+                    }
+                }
+
+                // 获取 patch 版本号
+                mReadPatchExtensionCharacteristic = service.getCharacteristic(OTA_READ_PATCH_EXTENSION_CHARACTERISTIC_UUID);
+                if (mReadPatchExtensionCharacteristic == null) {
+                    if (D) {
+                        LogUtil.w(TAG, "OTA read patch extension version characteristic not found, do not read patch extension info.");
+                    }
+                    // do nothing
+                } else {
+                    if (D) {
+                        LogUtil.d(TAG, "mReadPatchExtensionCharacteristic = " + mReadPatchExtensionCharacteristic.getUuid());
+                    }
+                }
+
+                // Try to find the DFU service, check the remote is support Silent work mode.
+                BluetoothGattService serviceDfu = gatt.getService(DFU_SERVICE_UUID);
+                if (serviceDfu == null) {
+                    // If do not have dfu service, we think it is work on normal mode
+                    mHandle.sendMessage(mHandle.obtainMessage(OTA_FIND_CHARAC_SUCCESS));
+                } else {
+                    // If do have dfu service, we think it is work on silent mode
+                    if (D) {
+                        LogUtil.d(TAG, "DFU service = " + serviceDfu.getUuid());
+                    }
+                    // Check support extend flash OTA
+                    BluetoothGattCharacteristic extendFlashChara = serviceDfu.getCharacteristic(OTA_EXTEND_FLASH_CHARACTERISTIC_UUID);
+                    if (extendFlashChara == null) {
+                        if (D) {
+                            LogUtil.e(TAG, "OTA extend flash characteristic not found");
+                        }
+
+                        mReadBankCharacteristic = service.getCharacteristic(OTA_READ_BANK_CHARACTERISTIC_UUID);
+                        if (mReadBankCharacteristic == null) {
+                            if (D) {
+                                LogUtil.e(TAG, "OTA read bank characteristic not found");
+                            }
+                            mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_CHARA_FAIL));
+                            return;
+                        } else {
+                            if (D) {
+                                LogUtil.d(TAG, "mReadBankCharacteristic = " + mReadBankCharacteristic.getUuid());
+                            }
+                        }
+
+                        BluetoothGattCharacteristic reset = service.getCharacteristic(OTA_CHARACTERISTIC_UUID);
+                        // Check support both silent and normal?
+                        if (reset != null) {
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    showNormalOrSlientUpdateDialog();
+//                                }
+//                            });
+                        } else {
+                            mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_SILENT_MODE_SERVICE));
+                        }
+                        return;
+                    } else {
+                        if (D) {
+                            LogUtil.d(TAG, "extendFlashChara = " + extendFlashChara.getUuid());
+                        }
+                    }
+
+                    mHandle.sendMessage(mHandle.obtainMessage(OTA_GET_EXTEND_MODE_SERVICE));
+                }
+
+                // 获取固件版本号
+                final BluetoothGattService battService = gatt.getService(GATT_DEVICE_SERVICE_UUID);
+                if (battService == null) {
+                    if (D) {
+                        LogUtil.d(TAG, "No version service");
+                    }
+                    return;
+                }
+
+                mReadBankCharacteristic = battService.getCharacteristic(GATT_FIRMWARE_VERSION_CHARACTERISTIC_UUID);
+                if (mReadBankCharacteristic != null) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    gatt.readCharacteristic(mReadBankCharacteristic);
+                } else {
+                    if (D) {
+                        LogUtil.e(TAG, "No version");
+                    }
+                }
+
+
+            } else {
+                if (D) {
+                    LogUtil.e(TAG, "service discovery failed !!!");
+                }
+                mHandle.sendMessage(mHandle.obtainMessage(OTA_GATT_DISCOVERY_FAIL));
+            }
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (D) {
+                    LogUtil.d(TAG, "data = " + Arrays.toString(characteristic.getValue()));
+                    LogUtil.d(TAG, "uuid = " + characteristic.getUuid());
+                }
+
+                if (GATT_FIRMWARE_VERSION_CHARACTERISTIC_UUID.equals(characteristic.getUuid())) {
+                    // 获取固件版本号
+                    mFirmwareVersion = characteristic.getStringValue(0);
+                    Message msg = Message.obtain();
+                    msg.what = OTA_GET_TARGET_APP_VERSION;
+                    msg.obj = mFirmwareVersion;
+                    mHandle.sendMessage(msg);
+                    LogUtil.w(TAG, "old firmware version " + mFirmwareVersion);
+
+                } else if (characteristic.getUuid().equals(OTA_READ_APP_CHARACTERISTIC_UUID)) {
+                    byte[] appVersionValue = characteristic.getValue();
+                    ByteBuffer wrapped = ByteBuffer.wrap(appVersionValue);
+                    wrapped.order(ByteOrder.LITTLE_ENDIAN);
+                    oldFwVersion = wrapped.getShort(0);
+
+//                    Message msg = new Message();
+//                    msg.what = OTA_GET_TARGET_APP_VERSION;
+//                    msg.arg1 = oldFwVersion;
+//                    mHandle.sendMessage(msg);
+                    //mTargetVersionView.setText(String.valueOf(oldFwVersion));
+                    if (D) {
+                        LogUtil.i(TAG, "old firmware version: " + oldFwVersion + " .getValue=" + Arrays.toString(characteristic.getValue()));
+                    }
+                    if (mReadPatchCharacteristic != null) {
+                        readDeviceInfo(mReadPatchCharacteristic);
+                    }
+                } else if (characteristic.getUuid().equals(OTA_READ_PATCH_CHARACTERISTIC_UUID)) {
+                    byte[] patchVersionValue = characteristic.getValue();
+                    ByteBuffer wrapped = ByteBuffer.wrap(patchVersionValue);
+                    wrapped.order(ByteOrder.LITTLE_ENDIAN);
+                    oldPatchVersion = wrapped.getShort(0);
+                    //int oldPatchVersion = (characteristic.getValue()[1] & 0xff) *256 + (characteristic.getValue()[0] & 0xff); //This method can also get oldPatchVersion.
+                    Message msg = new Message();
+                    msg.what = OTA_GET_TARGET_PATCH_VERSION;
+                    msg.arg1 = oldPatchVersion;
+                    mHandle.sendMessage(msg);
+
+                    if (D) {
+                        LogUtil.w(TAG, "old patch version: " + oldPatchVersion + " .getValue=" + Arrays.toString(characteristic.getValue()));
+                    }
+                    //here can add read other characteristic
+                    // Check need to read patch extension info
+                    if (mReadPatchExtensionCharacteristic != null) {
+                        readDeviceInfo(mReadPatchExtensionCharacteristic);
+                    } else if (mReadBankCharacteristic != null) {
+                        readDeviceInfo(mReadBankCharacteristic);
+                    }
+                } else if (characteristic.getUuid().equals(OTA_READ_PATCH_EXTENSION_CHARACTERISTIC_UUID)) {
+                    byte[] patchExtensionVersionValue = characteristic.getValue();
+                    ByteBuffer wrapped = ByteBuffer.wrap(patchExtensionVersionValue);
+                    wrapped.order(ByteOrder.LITTLE_ENDIAN);
+                    targetPatchExtensionVersion = wrapped.getShort(0);
+                    //int oldPatchVersion = (characteristic.getValue()[1] & 0xff) *256 + (characteristic.getValue()[0] & 0xff); //This method can also get oldPatchVersion.
+                    Message msg = new Message();
+                    msg.what = OTA_GET_TARGET_PATCH_EXTENSION_INFO;
+                    msg.arg1 = targetPatchExtensionVersion;
+                    mHandle.sendMessage(msg);
+                    if (D) {
+                        LogUtil.d(TAG, "Target patch extension version: " + targetPatchExtensionVersion + " .getValue=" + Arrays.toString(characteristic.getValue()));
+                    }
+                    //here can add read other characteristic
+                    // Check need to read patch extension info
+                    if (mReadBankCharacteristic != null) {
+                        readDeviceInfo(mReadBankCharacteristic);
+                    }
+                } else if (characteristic.getUuid().equals(OTA_READ_BANK_CHARACTERISTIC_UUID)) {
+                    byte[] bankValue = characteristic.getValue();
+                    targetBankInfo = bankValue[0];
+                    //int oldPatchVersion = (characteristic.getValue()[1] & 0xff) *256 + (characteristic.getValue()[0] & 0xff); //This method can also get oldPatchVersion.
+                    Message msg = new Message();
+                    msg.what = OTA_GET_TARGET_BANK_INFO;
+                    msg.arg1 = targetBankInfo;
+                    mHandle.sendMessage(msg);
+                    if (D) {
+                        LogUtil.d(TAG, "Target bank: " + targetBankInfo + " .getValue=" + Arrays.toString(characteristic.getValue()));
+                    }
+                    //here can add read other characteristic
+
+                }
+            } else {
+                if (D) {
+                    LogUtil.e(TAG, "Read version characteristic failure on " + gatt + " " + characteristic);
+                }
+            }
+        }
+    };
+
+    public void init(Application app){
+        mApplication = app;
+        mDir = mApplication.getFilesDir().getAbsolutePath();
+    }
+
+    private void start(){
+        LogUtil.w(TAG, "start 启动");
+
+        if (mIsUpdating) {
+            LogUtil.w(TAG, "downloadFile 正在检测升级中，忽略本次调用");
+            return;
+        }
+        mIsUpdating = true;
+        mNeedRequest = false;
+
+        // initial Global Gatt
+        GlobalGatt.initial(mApplication);
+        BluetoothInputDeviceManager.initial(mApplication);
+
+        m_Interface = PrivateSettingCommon.getBluetoothInstance(mApplication);
+        if (m_Interface == null) {
+            LogUtil.e(TAG, " 蓝牙连接失败");
+            return;
+        }
+
+        // get the Realsil Dfu proxy
+        RealsilDfu.getDfuProxy(mApplication, cb);
+        // Check whether the ble support or not
+        isBLESupported();
+        // request to enable BT
+        if (!isBLEEnabled()) {
+            LogUtil.e(TAG, "isBLEEnabled is false");
+            mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+            if (mBtAdapter != null) {
+                boolean result = mBtAdapter.enable();
+                LogUtil.e(TAG, "isBLEEnabled enable " + result);
+            } else {
+                LogUtil.e(TAG, "mBtAdapter is null");
+            }
+        }
+
+        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+//        final BluetoothManager manager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+//        mBtAdapter = manager.getAdapter();
+//        if (mBtAdapter == null) {
+//            if (D) {
+//                LogUtil.e(TAG, "Bluetooth Not Suppoerted !!!");
+//            }
+//        }
+
+        mGlobalGatt = GlobalGatt.getInstance();
+        mGlobalGatt.initialize();
+        LogUtil.i(TAG, "initialize mGlobalGatt " + mGlobalGatt);
+    }
+
+    private PrivateSettingCommon.BluetoothInterface m_Interface;
+
+    private void connect(final boolean isHidDevice){
+        mBluetoothDevice = getBluetoothDevice();
+        if (mBluetoothDevice == null) {
+            LogUtil.e(TAG, "蓝牙设备未连接，退出");
+            close();
+            mIsUpdating = false;
+            return;
+        }
+
+//        mDeviceName = m_BluetoothDevice.getName();
+        mDeviceAddress = mBluetoothDevice.getAddress();
+        mDeviceName = mBluetoothDevice.getName();
+        LogUtil.i(TAG, "蓝牙已连接 mDeviceAddress " + mDeviceAddress + ", mDeviceName " + mDeviceName);
+        // We only cover the device not bonded, and only the device is HID device, we will try to bond and create hid connect
+        if ((mBluetoothInputDeviceManager != null) && isHidDevice) {
+            // We need connect to the device first
+            if (D) {
+                LogUtil.d(TAG, "Select a hid device, to make sure it didn't enter to DLPS, we should create a HID connect first.");
+            }
+//            showProgressBar(String.format(getString(R.string.connect_hid_profile)));
+            mBluetoothInputDeviceManager.connect(mDeviceAddress, mHidConnectCallback);
+        } else {
+            connectWithGatt();
+        }
+    }
+
+    private BluetoothDevice getBluetoothDevice() {
+        if (m_Interface == null) {
+            return null;
+        }
+        Set<BluetoothDevice> l_setPairedList = m_Interface.getBondedDevices();
+        Object[] l_arrPairedDevice = l_setPairedList.toArray();
+
+        for (int l_i = 0; l_i < l_arrPairedDevice.length; l_i++) {
+            BluetoothDevice l_BluetoothDevice = (BluetoothDevice) l_arrPairedDevice[l_i];
+            String l_strDeviceName = l_BluetoothDevice.getName();
+            LogUtil.v(TAG, "l_strDeviceName " + l_strDeviceName);
+            // 海外第一批出货遥控器型号为XFRB，之后遥控器固件升级为Lunzn_Max。为支持遥控器固件升级，需要系统和单端遥控固件升级app，支持两种型号遥控器适配
+            if (CommonUtil.isNotEmpty(l_strDeviceName) && (l_strDeviceName.startsWith("Lunzn") || l_strDeviceName.startsWith("XFRB"))) {
+                if (m_Interface.isConnected(l_BluetoothDevice)) {
+                    return l_BluetoothDevice;
+                } else {
+                    LogUtil.w(TAG, "getBluetoothDevice not isConnected ");
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean LoadFileInfo(String path) {
+        // check the file path
+        if (TextUtils.isEmpty(path)) {
+            if (D) {
+                LogUtil.e("TAG", "the file path string is null");
+            }
+            return false;
+        }
+
+        // check the file type
+        if (!MimeTypeMap.getFileExtensionFromUrl(path).equalsIgnoreCase("BIN")) {
+//            mStatusOk = false;
+            if (D) {
+                LogUtil.e("TAG", "the file type is not right");
+            }
+            return false;
+        }
+        if (isSelectedSilentModeDevice) {
+            try {
+                mMergeFileManager = new MergeFileManager(path);
+            } catch (IOException ee) {
+                if (D) {
+                    LogUtil.e(TAG, "error in open merge file " + ee);
+                }
+                // reset it
+                mMergeFileManager = null;
+                //get the new firmware version
+                try {
+                    mBinInputStream = openInputStream(path);
+                } catch (final IOException e) {
+                    if (D) {
+                        LogUtil.e(TAG, "An exception occurred while opening file " + e);
+                    }
+                    return false;
+                }
+                newFwVersion = mBinInputStream.binFileVersion();
+                if (D) {
+                    LogUtil.d(TAG, "newFwVersion = " + newFwVersion);
+                }
+                // close the file
+                if (mBinInputStream != null) {
+                    try {
+                        mBinInputStream.close();
+                        mBinInputStream = null;
+                    } catch (IOException e) {
+                        if (D) {
+                            LogUtil.e(TAG, "error in close file " + e);
+                        }
+                        return false;
+                    }
+                }
+            }
+        } else {
+            // reset it
+            mMergeFileManager = null;
+            //get the new firmware version
+            try {
+                mBinInputStream = openInputStream(path);
+            } catch (final IOException e) {
+                if (D) {
+                    LogUtil.e(TAG, "An exception occurred while opening file " + e);
+                }
+                return false;
+            }
+            newFwVersion = mBinInputStream.binFileVersion();
+            if (D) {
+                LogUtil.d(TAG, "newFwVersion = " + newFwVersion);
+            }
+            // close the file
+            if (mBinInputStream != null) {
+                try {
+                    mBinInputStream.close();
+                    mBinInputStream = null;
+                } catch (IOException e) {
+                    if (D) {
+                        LogUtil.e(TAG, "error in close file " + e);
+                    }
+                    return false;
+                }
+            }
+        }
+
+//        mStatusOk = true;
+
+        return true;
+    }
+
+    /**
+     * 显示升级框
+     */
+    private void showUpgrade() {
+        if (mStepDialog == null) {
+            mStepDialog = new StepDialog(mApplication);
+        }
+        mStepDialog.show();
+        mStepDialog.showConfirm();
+
+        mStepDialog.setOnClickListener(new StepDialog.OnClickListener() {
+            @Override
+            public void onConfirm() {
+                startOtaProcess(mPaths[mFileIndex]);
+            }
+
+            @Override
+            public void onCancel() {
+                mStepDialog.cancel();
+                mIsUpdating = false;
+            }
+
+            @Override
+            public void dismiss() {
+                close();
+                mIsUpdating = false;
+            }
+        });
+    }
+
+
+    /**
+     * Opens the binary input stream from a BIN file. A Path to the BIN file is given.
+     *
+     * @param filePath the path to the BIN file
+     * @return the binary input stream with BIN data
+     * @throws IOException
+     */
+    private BinInputStream openInputStream(final String filePath) throws IOException {
+        final InputStream is = new FileInputStream(filePath);
+        return new BinInputStream(is);
+    }
+
+    private void startOtaProcess(String filePath) {
+        if (D) {
+            LogUtil.i(TAG, "startOtaProcess filePath " + filePath + ", mFileIndex " + mFileIndex + ", mFileCount " + mFileCount);
+        }
+//        mUpdateSuccessful = false;
+//        if (mUploadButton.getText().toString().equals(getString(R.string.dfu_action_upload))) {
+            if (dfu == null) {
+                showToast(R.string.toast_dfu_service_not_ready);
+                if (D) {
+                    LogUtil.e(TAG, "the realsil dfu didn't ready");
+                }
+                return;
+            }
+
+            // If in silent work mode, we should make sure the OTA progress didn't affect the normal traffic.
+            // Normally we set the speed is 100B/s, user can change the value for customer platform.
+            if ((dfu.getWorkMode() & RealsilDfu.OTA_MODE_SILENT_UPLOAD_MASK) != 0) {
+                if (mTotalSpeedInSilentMode != -1) {
+                    dfu.setSpeedControl(true, mTotalSpeedInSilentMode);
+                } else {
+                    dfu.setSpeedControl(false, 0);
+                }
+
+                // set the need wait user check flag, in silent mode, we should wait user
+                // check to active the image
+                dfu.setNeedWaitUserCheckFlag(true);
+            } else {
+                dfu.setNeedWaitUserCheckFlag(false);
+            }
+
+            // set the total speed for android 4.4, to escape the internal error
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                dfu.setSpeedControl(true, 1000);
+            }
+            // Use GlobalGatt do not need to disconnect, just unregister the callback
+            mGlobalGatt.unRegisterCallback(mDeviceAddress, mBluetoothGattCallback);
+            /*
+            // disconnect the gatt
+            disconnect(mBtGatt);// be care here
+            // wait a while for close gatt.
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }*/
+            if (D) {
+                LogUtil.w(TAG, "Start OTA, address is: " + mDeviceAddress);
+            }
+            mOtaStartTime = System.currentTimeMillis();
+            mOtaImageSendStartTime = 0;
+            if (dfu.start(mDeviceAddress, filePath)) {
+                showToast(R.string.toast_start_ota_process);
+                if (D) {
+                    LogUtil.d(TAG, "true");
+                }
+            } else {
+                showToast(R.string.toast_prepare_ota_process_failed);
+                if (D) {
+                    LogUtil.e(TAG, "something error in device info or the file, false");
+                }
+            }
+            mFileIndex++;
+
+            mStepDialog.showProgress();
+            mStepDialog.setProgress(0);
+            mStepDialog.setStep(mFileIndex + "/" + mFileCount);
+
+//            showProgressBar();
+//        }
+    }
+
+    private void connectWithGatt() {
+        LogUtil.v(TAG, "invoke connectWithGatt");
+        if (mGlobalGatt == null) {
+            LogUtil.e(TAG, "connectWithGatt mGlobalGatt is null");
+            mIsUpdating = false;
+            return;
+        }
+//        showProgressBar(String.format(getString(R.string.connect_device), mDeviceAddress));
+        // use GlobalGatt
+        //mBtGatt = mSelectedDevice.connectGatt(getApplicationContext(), false, new VoiceOverHogpCallback());
+        mGlobalGatt.connect(mDeviceAddress, mBluetoothGattCallback);
+    }
+
+    private void readDeviceInfo(BluetoothGattCharacteristic characteristic) {
+        if (characteristic != null) {
+            if (D) {
+                LogUtil.d(TAG, "read readDeviceinfo:" + characteristic.getUuid());
+            }
+            mBtGatt.readCharacteristic(characteristic);
+        } else {
+            if (D) {
+                LogUtil.e(TAG, "readDeviceinfo Characteristic is null");
+            }
+        }
+    }
+
+    private void isBLESupported() {
+        if (!mApplication.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            showToast(R.string.no_ble);
+        }
+    }
+
+    private boolean isBLEEnabled() {
+        final BluetoothManager manager = (BluetoothManager) mApplication.getSystemService(Context.BLUETOOTH_SERVICE);
+        if (manager != null) {
+            final BluetoothAdapter adapter = manager.getAdapter();
+            return adapter != null && adapter.isEnabled();
+        }
+        return false;
+    }
+
+    private void showToast(final int messageResId) {
+        LogUtil.w("提示 " + mApplication.getString(messageResId));
+//        LzToast.showToast(mApplication, mApplication.getString(messageResId), 2000);
+//        Toast.makeText(mApplication, messageResId, Toast.LENGTH_SHORT).show();
+    }
+
+    private void showToast(final String message) {
+        LogUtil.w("提示1 " + message);
+//        Toast.makeText(mApplication, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void close(){
+        if (D) {
+            LogUtil.d(TAG, "onDestroy");
+        }
+        if (dfu != null) {
+            dfu.close();
+        }
+        // disconnect and close the gatt
+        if (mGlobalGatt != null) {
+            mGlobalGatt.closeAll();
+        }
+    }
+
+    // 收到回连广播, 开机广播后调用升级
+    public void checkUpgradeForce(){
+        boolean networkConnected = isNetworkConnected(mApplication);
+        LogUtil.i(TAG, "networkConnected " + networkConnected);
+        if (networkConnected) {
+            start();
+        } else {
+            mNeedRequest = true;
+        }
+    }
+
+    // 收到网络连接广播后
+    public void checkUpgrade() {
+        LogUtil.i(TAG, "checkUpgrade mNeedRequest " + mNeedRequest);
+        if (mNeedRequest) {
+            boolean networkConnected = isNetworkConnected(mApplication);
+            LogUtil.i(TAG, "checkUpgrade networkConnected " + networkConnected);
+            if (networkConnected) {
+                try {
+                    start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    // 判断网络连接状态
+    public static boolean isNetworkConnected(Context context) {
+        if (context != null) {
+            ConnectivityManager mgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (mgr != null) {
+                NetworkInfo mNetworkInfo = mgr.getActiveNetworkInfo();
+                if (mNetworkInfo != null) {
+                    return mNetworkInfo.isAvailable();
+                }
+            }
+        }
+        return false;
+    }
+
+}

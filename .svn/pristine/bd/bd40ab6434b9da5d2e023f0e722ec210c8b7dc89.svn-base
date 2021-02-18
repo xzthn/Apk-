@@ -1,0 +1,62 @@
+package com.lzui.apkupgrade.net;
+
+import com.lzui.apkcheck.BuildConfig;
+
+/**
+ * 全局环境变量
+ *
+ * @author admin
+ * @version 1.0
+ * @date 2017-12-11
+ * @project com.lzui.apkupgrade
+ * @package com.lzui.apkupgrade.net
+ * @package MVDeviceConfig.java
+ */
+public class MVDeviceConfig {
+    /* *//** 是否是海外版，手动修改该值 *//*
+    public final static boolean isOverseas = true;
+    *//**
+     * 服务器优先请求地址
+     *//*
+    public static String[] urlList1 = new String[]{"http://lunzn.aisee.tv/m2/"};
+
+    *//**
+     * 服务器域名  (增加host映射)
+     *//*
+    private static String realmName = "lunzn.aisee.tv";
+
+    *//**
+     * 海外DS渠道优先请求地址
+     *//*
+    public static String[] OverseasList1 = new String[]{"http://ovssys.aihmong.com/m2/"};
+
+    *//** 海外DS服务器域名 *//*
+    private static String OverseasName = "ovssys.aihmong.com";*/
+
+    private static String URL = "http://" + BuildConfig.BASE_URL + "/m2/";
+
+    /**
+     * 是否升级完需要重启
+     */
+    public static boolean needReboot;
+
+    /**
+     * 获取URL地址
+     *
+     * @return String[] URL地址
+     */
+    public static String[] getUrls(boolean isBack) {
+        return new String[]{URL};
+    }
+
+    /**
+     * 获取域名
+     *
+     * @return
+     */
+    public static String getRealmName() {
+
+        return BuildConfig.BASE_URL;
+    }
+
+}

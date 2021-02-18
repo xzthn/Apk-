@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3"><dataSet config="main"><source path="F:\asspace\APKCheck_trunk\app\src\main\jniLibs"/></dataSet><dataSet config="HISIOV"><source path="F:\asspace\APKCheck_trunk\app\src\HISIOV\jniLibs"/></dataSet><dataSet config="release"><source path="F:\asspace\APKCheck_trunk\app\src\release\jniLibs"/></dataSet><dataSet config="HISIOVRelease"><source path="F:\asspace\APKCheck_trunk\app\src\HISIOVRelease\jniLibs"/></dataSet></merger>

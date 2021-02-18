@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="error_code">
+        <item>@array/error_code_256</item>
+        <item>@array/error_code_257</item>
+        <item>@array/error_code_258</item>
+        <item>@array/error_code_259</item>
+        <item>@array/error_code_260</item>
+        <item>@array/error_code_261</item>
+        <item>@array/error_code_262</item>
+        <item>@array/error_code_263</item>
+        <item>@array/error_code_264</item>
+        <item>@array/error_code_265</item>
+        <item>@array/error_code_266</item>
+        <item>@array/error_code_267</item>
+        <item>@array/error_code_268</item>
+        <item>@array/error_code_269</item>
+        <item>@array/error_code_270</item>
+        <item>@array/error_code_271</item>
+        <item>@array/error_code_272</item>
+        <item>@array/error_code_273</item>
+        <item>@array/error_code_274</item>
+        <item>@array/error_code_767</item>
+        <item>@array/error_code_2305</item>
+
+
+    </array>
+
+    <array name="error_code_256">
+        <item>"256"</item>
+        <item>Can\’t connect the device enter OTA mode</item>
+        <item>1. Radio environment is extremely bad
+            \n2. Android connect BLE device with BR/EDR channel
+            \n3. Bluedroid exception
+        </item>
+    </array>
+    <array name="error_code_257">
+        <item>"257"</item>
+        <item>IO error of read file</item>
+        <item>1. I/O error, the probability is very low</item>
+    </array>
+    <array name="error_code_258">
+        <item>"258"</item>
+        <item>Launch the GATT search service failure</item>
+        <item>1. Bluedroid exception, the probability is very low</item>
+    </array>
+    <array name="error_code_259">
+        <item>"259"</item>
+        <item>Invokes the Java synchronization lock exceptions</item>
+        <item>1. Java exception, the probability is very low</item>
+    </array>
+    <array name="error_code_260">
+        <item>"260"</item>
+        <item>Connect with no callback</item>
+        <item>1. Probably other applications connection with the same device
+            \n2. Bluedroid exception, the probability is very low
+        </item>
+    </array>
+    <array name="error_code_261">
+        <item>"261"</item>
+        <item>Send command but no callback</item>
+        <item>1. Disconnect when send command
+            \n2. If is Android4.4 system, get the error when half in upgrade, may be Bluedroid have
+            GKI get buffer exception, please use the patch version up to 9377(The function of update
+            connection parameters is added), or use the mobile phone above Android5.0
+        </item>
+    </array>
+    <array name="error_code_262">
+        <item>"262"</item>
+        <item>Service mismatch</item>
+        <item>1. Connect error device, the probability is very low</item>
+    </array>
+    <array name="error_code_263">
+        <item>"263"</item>
+        <item>Characteristic mismatch</item>
+        <item>1. Connect error device, the probability is very low</item>
+    </array>
+    <array name="error_code_264">
+        <item>"264"</item>
+        <item>GATT object is null</item>
+        <item>1. Bluedroid exception, the probability is very low</item>
+    </array>
+    <array name="error_code_265">
+        <item>"265"</item>
+        <item>Can\’t scan the device</item>
+        <item>1. Radio environment is extremely bad
+            \n2. Sent to the command of “entering OTA mode”, but can\’t scan the device, the
+            possible reasons is the device are not yet enter the OTA mode
+        </item>
+    </array>
+    <array name="error_code_266">
+        <item>"266"</item>
+        <item>Can\’t enable notification</item>
+        <item>1. Bluedroid exception, the probability is very low</item>
+    </array>
+    <array name="error_code_267">
+        <item>"267"</item>
+        <item>Write characteristic error</item>
+        <item>1. Send write request but return response error</item>
+    </array>
+    <array name="error_code_268">
+        <item>"268"</item>
+        <item>Resend time reach max</item>
+        <item>1. Bluedroid exception, the probability is very low</item>
+    </array>
+    <array name="error_code_269">
+        <item>"269"</item>
+        <item>The battery is low</item>
+        <item>1. Remote battery low to 60%
+            \n2. Remote battery big to 110 but low to 140（For Huaiwei）
+        </item>
+    </array>
+    <array name="error_code_270">
+        <item>"270"</item>
+        <item>Read bank info error</item>
+        <item>1. Bluedroid exception, the probability is very low</item>
+    </array>
+    <array name="error_code_271">
+        <item>"271"</item>
+        <item>Read app info error</item>
+        <item>1. Bluedroid exception, the probability is very low</item>
+    </array>
+    <array name="error_code_272">
+        <item>"272"</item>
+        <item>Read patch info error</item>
+        <item>1. Bluedroid exception, the probability is very low</item>
+    </array>
+    <array name="error_code_273">
+        <item>"273"</item>
+        <item>User did\’t avtive image update</item>
+        <item>1. Occur when user did\’t active the image update in silent OTA update</item>
+    </array>
+    <array name="error_code_274">
+        <item>"274"</item>
+        <item>Buffer Check retry times reach MAX</item>
+        <item>1. Occur a lot of error 517</item>
+    </array>
+    <array name="error_code_767">
+        <item>"767"</item>
+        <item>Didn\’t receive remote notification</item>
+        <item>1. AES Mismatch
+            \n2. May be the remote device have problems in config memory allocation
+        </item>
+    </array>
+    <array name="error_code_2305">
+        <item>"2305"</item>
+        <item>Can\’t register Client_if</item>
+        <item>1. Client if had be registered over</item>
+    </array>
+</resources>

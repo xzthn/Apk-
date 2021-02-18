@@ -1,0 +1,109 @@
+apply plugin: 'com.android.application'
+
+def static releaseTime() {
+    return new Date().format("yyyyMMdd", TimeZone.getTimeZone("UTC"))
+}
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 19
+        flavorDimensions "versionCode"
+        versionCode 42
+        versionName "1.842"
+    }
+
+    signingConfigs {
+        config {
+            storeFile file("../config/systemsign.jks")
+            storePassword "123456"
+            keyAlias "key0"
+            keyPassword "123456"
+        }
+        hisiRelease {
+            storeFile file("../config/systemhisi.jks")
+            storePassword "123456"
+            keyAlias "key0"
+            keyPassword "123456"
+        }
+    }
+
+    // 自定义输出配置
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "apkcheck-V${defaultConfig.versionName}-C${defaultConfig.versionCode}-${variant.flavorName}-${releaseTime()}.apk"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig null
+        }
+
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig null
+        }
+    }
+
+    //打包渠道配置
+    productFlavors {
+        //海思版
+        HISI {
+            applicationId "hs.apk.update"
+            signingConfig = signingConfigs.hisiRelease
+            buildConfigField "String", "BASE_URL", '"aisys.aihmong.com"'
+        }
+        //公版
+        LZ {
+            applicationId "com.lzui.apkcheck"
+            signingConfig = signingConfigs.config
+            buildConfigField "String", "BASE_URL", '"lunzn.aisee.tv"'
+        }
+        //海思海外版
+        HISIOV {
+            applicationId "hs.apk.update"
+            signingConfig = signingConfigs.hisiRelease
+            buildConfigField "String", "BASE_URL", '"ovssys.aihmong.com"'
+        }
+    }
+
+    packagingOptions {
+        pickFirst 'META-INF/*'
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+
+        // App is not indexable by Google Search
+        disable 'GoogleAppIndexingWarning'
+    }
+
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+}
+
+dependencies {
+    implementation files('libs/platform-sdk-m2-1.0.9.jar')
+    implementation 'com.lunzn:systool:1.0.2'
+    implementation 'com.lunzn:tool:1.3.1'
+    implementation 'com.lunzn:file:1.0.5'
+    implementation 'com.platform:http:1.0.3'
+    implementation 'com.alibaba:fastjson:1.2.44'
+    implementation project(':firmwire')
+    implementation project(':lib-otathird')
+
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.3'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
+}

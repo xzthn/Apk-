@@ -1,0 +1,3 @@
+include ':lib-otathird'
+include ':app'
+include ':firmwire'

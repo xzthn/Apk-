@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.lunzn.tool.autofit.AutoRelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="450.0px"
+    android:layout_height="330.0px"
+    android:background="@drawable/dialog_main_bg"
+    android:paddingBottom="19.0px">
+
+    <com.lunzn.tool.autofit.AutoTextView
+        android:id="@+id/tv_dialog_title"
+        android:layout_width="450.0px"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="152.0px"
+        android:gravity="center_horizontal"
+        android:text="应用更新完成, 即将重启"
+        android:textColor="@android:color/white"
+        android:textSize="32.0px" />
+
+    <com.lunzn.tool.autofit.AutoLinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="48.0px"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="266.0px">
+
+        <com.lunzn.tool.autofit.AutoTextView
+            android:id="@+id/tv_reboot_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="5"
+            android:textColor="@android:color/black"
+            android:textSize="26.0px" />
+
+        <com.lunzn.tool.autofit.AutoTextView
+            android:id="@+id/tv_reboot_alert"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  秒之后将重启机器"
+            android:textColor="@android:color/black"
+            android:textSize="26.0px" />
+    </com.lunzn.tool.autofit.AutoLinearLayout>
+
+</com.lunzn.tool.autofit.AutoRelativeLayout>

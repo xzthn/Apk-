@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.lzui.otathird">
+
+
+
+    <application>
+
+        <service
+            android:name="com.realsil.sdk.dfu.DfuService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+
+    </application>
+
+</manifest>

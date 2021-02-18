@@ -1,0 +1,58 @@
+package com.lzui.apkupgrade.requesttask;
+
+import android.content.Context;
+import android.os.Handler;
+
+import com.lunzn.tool.log.LogUtil;
+import com.lzui.apkupgrade.net.SyncRequestTask;
+import com.lzui.apkupgrade.net.VoiceHttpRequest;
+import com.lzui.apkupgrade.util.FileSavePathUtil;
+import com.platform.sdk.m2.bean.launcher.LauncherAppUpgrade;
+import com.platform.sdk.m2.request.launcher.LauncherAppUpgradeRequest;
+import com.platform.sdk.m2.response.ResponseRoot;
+import com.platform.sdk.m2.response.launcher.LauncherAppUpgradeResponse;
+import com.platform.sdk.m2.util.Code;
+
+import java.util.List;
+
+/**
+ * app升级请求封装task
+ *
+ * @author Administrator
+ */
+public class AppUpgradeRequestTask extends SyncRequestTask {
+
+    /**
+     * 请求成功之后，回调handler
+     */
+    private Handler mHandler;
+
+    /**
+     * 上下文
+     */
+    private Context mContext;
+
+    public AppUpgradeRequestTask(Handler mHandler, Context mContext) {
+        this.mHandler = mHandler;
+        this.mContext = mContext;
+    }
+
+    @Override
+    public ResponseRoot onRequest() {
+        LogUtil.i("AppUpgradeRequestTask", "onRequest ");
+        LauncherAppUpgradeRequest req = new LauncherAppUpgradeRequest();
+        return VoiceHttpRequest.sendHttpPostRequest(mContext, req);
+    }
+
+    @Override
+    public void onExcute(ResponseRoot mResponse) {
+        LogUtil.i("AppUpgradeRequestTask", "onExcute  " + (mResponse == null ? "mResponse is null" : mResponse.getRetCode()));
+
+        if (mResponse != null && mResponse.getRetCode() == Code.SUCCESS) {
+            List<LauncherAppUpgrade> appList = ((LauncherAppUpgradeResponse) mResponse).getList();
+            LogUtil.i("AppUpgradeRequestTask", "appList " + appList);
+
+            mHandler.obtainMessage(FileSavePathUtil.MSG_GET_APP_UPGRADE_SUCCESS, appList).sendToTarget();
+        }
+    }
+}

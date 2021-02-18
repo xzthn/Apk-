@@ -1,0 +1,185 @@
+package com.lzui.apkupgrade.net;
+
+import android.content.Context;
+
+import com.alibaba.fastjson.JSON;
+import com.lunzn.tool.log.LogUtil;
+import com.lunzn.tool.util.CommonUtil;
+import com.lunzn.tool.util.DeviceInfoMgr;
+import com.lzui.apkcheck.BuildConfig;
+import com.lzui.apkupgrade.util.DeviceUtil;
+import com.platform.http.AndroidHttpConnction;
+import com.platform.sdk.m2.request.RequestInit;
+import com.platform.sdk.m2.request.RequestRoot;
+import com.platform.sdk.m2.response.ResponseRoot;
+import com.smart.app.AppInfoTools;
+
+import java.util.Arrays;
+import java.util.Random;
+
+/**
+ * 影片HTTP请求
+ *
+ * @author LiZhengGuang
+ * @version 1.0
+ * @date 2014-3-10
+ * @project COM.SMART.XIRI.MV.PROJECT.A20
+ * @package com.smart.mv.voice.net
+ * @package VoiceHttpRequest.java
+ */
+public class VoiceHttpRequest {
+
+    /**
+     * 发送post请求
+     *
+     * @param mContext 上下文
+     * @param mRequest 请求参数对象
+     * @return 请求结果
+     */
+    public static ResponseRoot sendHttpPostRequest(Context mContext, RequestRoot mRequest) {
+
+        ResponseRoot mResponse = null;
+        try {
+            mResponse = sendHttpRequest(mContext, mRequest);
+        } catch (Exception je) {
+            LogUtil.e("sendHttpPostRequest exception" + je);
+            je.printStackTrace();
+        }
+        return mResponse;
+    }
+
+    /**
+     * 将具体的请求发送至服务器，在访问地址不通的情况下，会进行切源操作
+     *
+     * @param mContext 上下文
+     * @param mRequest 具体请求对象
+     * @return 返回结果
+     */
+    private static ResponseRoot sendHttpRequest(Context mContext, RequestRoot mRequest) {
+        LogUtil.i("sendHttpRequest", "");
+
+        ResponseRoot res = null;
+        initRequestPublicParams(mContext);
+        String url = RequestInit.getServerIp();
+        String[] urlList = MVDeviceConfig.getUrls(false);
+        int currentPos = -1;
+        // 是否是备份地址请求列表
+        boolean isBackUrlList = false;
+        // 如果第一次请求地址为空，则在正式请求地址列表中随机一个地址，这样可以平衡服务器的负担
+        LogUtil.i("sendHttpRequest", "url " + url + ", " + Arrays.toString(urlList));
+        if (CommonUtil.isEmpty(url) && CommonUtil.isNotEmpty(urlList)) {
+            currentPos = new Random().nextInt(urlList.length);
+            url = urlList[currentPos];
+        } else {
+            // 判断当前地址是否是正式域名
+            currentPos = getPositionInArray(url, urlList);
+            // 如果当前域名不是正式域名，则判断是否是备份域名
+            LogUtil.i("sendHttpRequest", "currentPos " + currentPos + ", " + CommonUtil.isNotEmpty(MVDeviceConfig.getUrls(true)));
+            if (currentPos == -1 && CommonUtil.isNotEmpty(MVDeviceConfig.getUrls(true))) {
+                urlList = MVDeviceConfig.getUrls(true);
+                currentPos = getPositionInArray(url, urlList);
+                // 标识当前是备份域名请求里诶包
+                isBackUrlList = true;
+            }
+        }
+        res = getResponseFromNet(mRequest, urlList, currentPos);
+        // 如果请求失败，则切换其他的请求地址列表
+        if (res == null) {
+            // 如果当前是备份域名，则切换至正式域名组, 如果当前是正式域名，则切换至备份域名组
+            urlList = MVDeviceConfig.getUrls(!isBackUrlList);
+            // 从第一个url开始从新请求一遍新的接口列表，直至请求成功
+            currentPos = 0;
+            res = getResponseFromNet(mRequest, urlList, currentPos);
+        }
+        return res;
+    }
+
+    /**
+     * 从服务器获取请求结果
+     *
+     * @param mRequest   接口请求对象
+     * @param urlList    请求地址列表
+     * @param currentPos 当前请求地址在请求列表中的位置
+     * @return 请求结果
+     */
+    private static ResponseRoot getResponseFromNet(RequestRoot mRequest, String[] urlList, int currentPos) {
+        LogUtil.i("getResponseFromNet", "urlList " + Arrays.toString(urlList) + ", currentPos " + currentPos);
+
+        int urlLength = urlList.length;
+        String url = urlList[currentPos];
+        ResponseRoot res = null;
+        for (int i = 0; i < urlLength; i++) {
+            RequestInit.setServerIp(url);
+            long startTime = System.currentTimeMillis();
+            StringBuilder sBuilder = new StringBuilder("[REQUEST][" + startTime + "][");
+            sBuilder.append(RequestInit.getServerIp() + mRequest.getRequestUrl() + "?" + RequestInit.getString());
+            sBuilder.append("&D=" + mRequest.getData());
+            LogUtil.i("getResponseFromNet", "333 " + mRequest.getData());
+            sBuilder.append("\r\n");
+            res = mRequest.getResponse();
+            long endTime = System.currentTimeMillis();
+            sBuilder.append("[RESPONSE][" + startTime + "][TIME][" + (endTime - startTime) + "]");
+            String str = mRequest.getRequestUrl();
+            sBuilder.append("[").append(str).append("]").append(JSON.toJSONString(res));
+            LogUtil.i("getResponseFromNet", "sBuilder " + sBuilder.toString());
+            // 如果请求失败则切换同组地址其他源
+            if (res == null || (res.getRetCode() > 0 && res.getRetCode() < 1000)) {
+                currentPos = currentPos + 1 >= urlLength ? 0 : currentPos + 1;
+                url = urlList[currentPos];
+            } else {
+                // 请求成功，保存请求地址，并且返回
+                //                SharedPreferenceUtil.set("request_url", url);
+                break;
+            }
+        }
+        return res;
+    }
+
+    /**
+     * 初始化公共请求参数
+     *
+     * @param mContext 上下文
+     */
+    private static void initRequestPublicParams(Context mContext) {
+        if (BuildConfig.APPLICATION_ID.equalsIgnoreCase("hs.apk.update")) {
+            RequestInit.setLauncherSign(AppInfoTools.getAppChannel(mContext, "hs.launcher", "COVERSION"));
+            RequestInit.setRomSign(DeviceUtil.getSoftwareVersion());
+            RequestInit.setGdid("");
+            RequestInit.setSn(DeviceUtil.getSN());
+            RequestInit.setMac(DeviceUtil.getMacAddress());
+        }else {
+            RequestInit.setLauncherSign(AppInfoTools.getAppChannel(mContext, "com.lzui.launcher", "COVERSION"));
+            DeviceInfoMgr.DeviceInfo deviceInfo = DeviceInfoMgr.getInstance().getDeviceInfo(mContext);
+            if (deviceInfo != null) {
+                RequestInit.setRomSign(deviceInfo.getSoftwareVersion());
+                RequestInit.setGdid(deviceInfo.getGdid());
+                RequestInit.setSn(deviceInfo.getSn());
+                RequestInit.setMac(deviceInfo.getMac());
+            }
+        }
+
+        RequestInit.setLauncherVsn(AppInfoTools.getApkVersion(mContext, mContext.getPackageName()));
+        RequestInit.setHttpConn(new AndroidHttpConnction());
+        RequestInit.setRealmName(MVDeviceConfig.getRealmName());
+    }
+
+    /**
+     * 获取字符串在字符数组中的地址
+     *
+     * @param str 要定位的字符串
+     * @param arr 字符串数组
+     * @return 位置索引
+     */
+    private static int getPositionInArray(String str, String[] arr) {
+        int result = -1;
+        if (CommonUtil.isNotEmpty(str) && CommonUtil.isNotEmpty(arr)) {
+            for (int i = 0; i < arr.length; i++) {
+                if (str.equals(arr[i])) {
+                    result = i;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+} // End class VoiceHttpRequest
